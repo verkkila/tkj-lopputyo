@@ -11,12 +11,13 @@
 #define OPT3001_H_
 
 #include <ti/drivers/I2C.h>
+#include "util/math.h"
 
 #define OPT3001_REG_RESULT		0x0
 #define OPT3001_REG_CONFIG		0x1
 #define OPT3001_DATA_READY		0x80
 
-void opt3001_setup(I2C_Handle *i2c);
-double opt3001_get_data(I2C_Handle *i2c);
+void OPT3001_Setup(I2C_Handle *i2c);
+float OPT3001_GetLuminosity(I2C_Handle *i2c);
 
 #endif /* OPT3001_H_ */

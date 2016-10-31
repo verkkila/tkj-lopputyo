@@ -6,30 +6,22 @@
  *
  *  Datakirja: http://www.ti.com/lit/ds/symlink/tmp007.pdf
  */
-
-#include <xdc/runtime/System.h>
-#include <string.h>
-#include <math.h>
-#include "Board.h"
 #include "tmp007.h"
 
-I2C_Transaction i2cTransaction;
-char txBuffer[4];
-char rxBuffer[2];
-
-
-void tmp007_setup(I2C_Handle *i2c) {
-
+void TMP007_Setup(I2C_Handle *i2c)
+{
 	System_printf("TMP007: Config not needed!\n");
     System_flush();
 }
 
-double tmp007_get_data(I2C_Handle *i2c) {
+float TMP007_GetTemperature(I2C_Handle *i2c)
+{
+	float temperature = 0.0f;
+	uint16_t temperatureRaw = 0;
+	I2C_Transaction i2cTransaction;
+	char txBuffer[4];
+	char rxBuffer[2];
 
-	double temperature = 0.0;
-	int16_t temp_full = 0;
-
-	/* FILL OUT THIS DATA STRUCTURE TO GET TEMPERATURE DATA*/
 	txBuffer[0] = TMP007_REG_TEMP;
     i2cTransaction.slaveAddress = Board_TMP007_ADDR;
     i2cTransaction.writeBuf = txBuffer;
@@ -37,35 +29,36 @@ double tmp007_get_data(I2C_Handle *i2c) {
     i2cTransaction.readBuf = rxBuffer;
     i2cTransaction.readCount = 2;
 
-
 	if (I2C_transfer(*i2c, &i2cTransaction)) {
-		int i = 2;
-		temp_full = (rxBuffer[0] << 8) | rxBuffer[1];
-		if (temp_full & 0x8000) {
-			//negatiivinen
-			temp_full = ~(temp_full) + 1;
+		int i, isNegative;
+		temperatureRaw = (rxBuffer[0] << 8) | rxBuffer[1];
+		//temperatureRaw = 0b1100000001000000; //-127.5
+		isNegative = temperatureRaw & 0x8000;
+
+		if (temperatureRaw & 1) /*check data invalid bit*/
+			return 0.0f;
+
+		if (isNegative) {
+			temperatureRaw = ~(temperatureRaw) + 1; /*two's complement*/
 		}
+
 		for (i = 2; i < 15; ++i) {
-			int bit = (temp_full >> i) & 1;
-			double exp = i - 7;
-			if (bit) {
-				temperature += pow(2.0, exp);
+			int isBitSet = (temperatureRaw >> i) & 1;
+			int exp = i - 7;
+			if (isBitSet) {
+				temperature += ipow2(exp);
 			}
 		}
-		/*
-		sprintf(temp, "%f", temperature);
-		System_printf("%s\n", temp);
-		*/
-		System_flush();
-		// HERE YOU GET THE TEMPERATURE VALUE FROM RXBUFFER
-		// ACCORDING TO DATASHEET
 
+		if (isNegative)
+			temperature *= -1;
+
+		System_flush();
 	} else {
 
 		System_printf("TMP007: Data read failed!\n");
 		System_flush();
 	}
-
 	return temperature;
 }
 

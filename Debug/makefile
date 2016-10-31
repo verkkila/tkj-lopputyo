@@ -2,7 +2,9 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-CG_TOOL_ROOT := /home/tsei/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS
+SHELL = cmd.exe
+
+CG_TOOL_ROOT := C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS
 
 GEN_OPTS__FLAG := --cmd_file="configPkg/compiler.opt"
 GEN_CMDS__FLAG := -l"configPkg/linker.cmd"
@@ -16,27 +18,30 @@ ORDERED_OBJS += \
 "./sensors/mpu9250.obj" \
 "./sensors/opt3001.obj" \
 "./sensors/tmp007.obj" \
+"./util/math.obj" \
 "./wireless/CWC_CC2650_154Drv.obj" \
 "./wireless/CWC_IntegrTest.obj" \
 "./wireless/ERRORS.obj" \
 "./wireless/comm_lib.obj" \
 "../CC2650STK.cmd" \
 $(GEN_CMDS__FLAG) \
--l"/home/tsei/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/bin/ccs/driverlib.lib" \
+-l"C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/bin/ccs/driverlib.lib" \
 -llibc.a \
 
 -include ../makefile.init
 
-RM := rm -rf
-RMDIR := rm -rf
+RM := DEL /F
+RMDIR := RMDIR /S/Q
 
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
 -include sensors/subdir_vars.mk
+-include util/subdir_vars.mk
 -include wireless/subdir_vars.mk
 -include subdir_rules.mk
 -include sensors/subdir_rules.mk
+-include util/subdir_rules.mk
 -include wireless/subdir_rules.mk
 -include objects.mk
 
@@ -153,13 +158,13 @@ all: Lopputyo_.out
 Lopputyo_.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: ARM Linker'
-	"/home/tsei/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/bin/armcl" -mv7M3 --code_state=16 --float_support=vfplib -me -g --define=ccs --diag_wrap=off --display_error_number --diag_warning=225 --diag_warning=255 --gen_func_subsections=on --abi=eabi -z -m"Lopputyo_.map" --stack_size=256 --heap_size=0 -i"/home/tsei/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/lib" -i"/home/tsei/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include" --reread_libs --display_error_number --warn_sections --diag_wrap=off --xml_link_info="Lopputyo__linkInfo.xml" --rom_model -o "Lopputyo_.out" $(ORDERED_OBJS)
+	"C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/bin/armcl" -mv7M3 --code_state=16 --float_support=vfplib -me -g --define=ccs --diag_wrap=off --diag_warning=225 --diag_warning=255 --display_error_number --gen_func_subsections=on --abi=eabi -z -m"Lopputyo_.map" --stack_size=256 --heap_size=0 -i"C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/lib" -i"C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include" --reread_libs --display_error_number --warn_sections --diag_wrap=off --xml_link_info="Lopputyo__linkInfo.xml" --rom_model -o "Lopputyo_.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 Lopputyo_.hex: $(EXE_OUTPUTS)
 	@echo 'Invoking: ARM Hex Utility'
-	"/home/tsei/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/bin/armhex" --memwidth=8 --romwidth=8 --intel -o "Lopputyo_.hex" $(EXE_OUTPUTS__QUOTED)
+	"C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/bin/armhex" --memwidth=8 --romwidth=8 --intel -o "Lopputyo_.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building: $@'
 	@echo ' '
 
@@ -167,8 +172,8 @@ Lopputyo_.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)$(GEN_CMDS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "CC2650STK.d" "ccfg.d" "main.d" "sensors/bmp280.d" "sensors/hdc1000.d" "sensors/mpu9250.d" "sensors/opt3001.d" "sensors/tmp007.d" "wireless/CWC_CC2650_154Drv.d" "wireless/CWC_IntegrTest.d" "wireless/ERRORS.d" "wireless/comm_lib.d" 
-	-$(RM) "CC2650STK.obj" "ccfg.obj" "main.obj" "sensors/bmp280.obj" "sensors/hdc1000.obj" "sensors/mpu9250.obj" "sensors/opt3001.obj" "sensors/tmp007.obj" "wireless/CWC_CC2650_154Drv.obj" "wireless/CWC_IntegrTest.obj" "wireless/ERRORS.obj" "wireless/comm_lib.obj" 
+	-$(RM) "CC2650STK.d" "ccfg.d" "main.d" "sensors\bmp280.d" "sensors\hdc1000.d" "sensors\mpu9250.d" "sensors\opt3001.d" "sensors\tmp007.d" "util\math.d" "wireless\CWC_CC2650_154Drv.d" "wireless\CWC_IntegrTest.d" "wireless\ERRORS.d" "wireless\comm_lib.d" 
+	-$(RM) "CC2650STK.obj" "ccfg.obj" "main.obj" "sensors\bmp280.obj" "sensors\hdc1000.obj" "sensors\mpu9250.obj" "sensors\opt3001.obj" "sensors\tmp007.obj" "util\math.obj" "wireless\CWC_CC2650_154Drv.obj" "wireless\CWC_IntegrTest.obj" "wireless\ERRORS.obj" "wireless\comm_lib.obj" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

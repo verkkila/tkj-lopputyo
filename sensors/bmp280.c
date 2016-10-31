@@ -32,7 +32,7 @@ I2C_Transaction i2cTransaction;
 char txBuffer[4];
 char rxBuffer[24];
 
-void bmp280_set_trimming(char *v) {
+static void BMP280_SetTrimming(char *v) {
 
 	dig_T1 = (v[1] << 8) | v[0];
 	dig_T2 = (v[3] << 8) | v[2];
@@ -51,7 +51,7 @@ void bmp280_set_trimming(char *v) {
 	dig_P9 = (v[23] << 8) | v[22];
 }
 
-double bmp280_convert_temp(uint32_t adc_T) {
+static double BMP280_ConvertTemperature(uint32_t adc_T) {
 
 	double ret = 0.0;
 	int32_t var1, var2;
@@ -65,7 +65,7 @@ double bmp280_convert_temp(uint32_t adc_T) {
 	return ret;
 }
 
-double bmp280_convert_pres(uint32_t adc_P) {
+static double BMP280_ConvertPressure(uint32_t adc_P) {
 
 	double ret = 0.0;
 	int64_t var1, var2, p;
@@ -89,7 +89,7 @@ double bmp280_convert_pres(uint32_t adc_P) {
 	return ret;
 }
 
-void bmp280_setup(I2C_Handle *i2c) {
+void BMP280_Setup(I2C_Handle *i2c) {
 
     i2cTransaction.slaveAddress = Board_BMP280_ADDR;
     txBuffer[0] = BMP280_REG_CONFIG;
@@ -100,7 +100,6 @@ void bmp280_setup(I2C_Handle *i2c) {
     i2cTransaction.readCount = 0;
 
     if (I2C_transfer(*i2c, &i2cTransaction)) {
-
         System_printf("BMP280: Config write ok\n");
     } else {
         System_printf("BMP280: Config write failed!\n");
@@ -131,48 +130,41 @@ void bmp280_setup(I2C_Handle *i2c) {
     i2cTransaction.readCount = 24;
 
     if (I2C_transfer(*i2c, &i2cTransaction)) {
-
         System_printf("BMP280: Trimming read ok\n");
     } else {
         System_printf("BMP280: Trimming read failed!\n");
     }
     System_flush();
 
-    bmp280_set_trimming(rxBuffer);
+    BMP280_SetTrimming(rxBuffer);
 }
 
-void bmp280_get_data(I2C_Handle *i2c, double *pres, double *temp) {
+float BMP280_GetPressure(I2C_Handle *i2c) {
+	uint32_t pressureRaw = 0;
+	uint32_t temperatureRaw = 0;
+	float pressure = 0.0f;
 
-	/* FILL OUT THIS DATA STRUCTURE TO ASK DATA*/
 	txBuffer[0] = BMP280_REG_PRES;
     i2cTransaction.slaveAddress = Board_BMP280_ADDR;
     i2cTransaction.writeBuf = txBuffer;
     i2cTransaction.writeCount = 1;
     i2cTransaction.readBuf = rxBuffer;
     i2cTransaction.readCount = 6;
-    uint32_t pressure = 0;
-    uint32_t temperature = 0;
 
     if (I2C_transfer(*i2c, &i2cTransaction)) {
-    	pressure |= rxBuffer[0] << 12;
-    	pressure |= rxBuffer[1] << 4;
-    	pressure |= rxBuffer[2] >> 4;
-    	temperature |= rxBuffer[3] << 12;
-    	temperature |= rxBuffer[4] << 4;
-    	temperature |= rxBuffer[5] >> 4;
-    	*temp = bmp280_convert_temp(temperature);
-    	*pres= bmp280_convert_pres(pressure);
-
+    	pressureRaw = (rxBuffer[0] << 12) | (rxBuffer[1] << 4) | (rxBuffer[2] >> 4);
+    	temperatureRaw = (rxBuffer[3] << 12) | (rxBuffer[4] << 4) | (rxBuffer[5] >> 4);
+    	BMP280_ConvertTemperature(temperatureRaw);
+    	pressure = BMP280_ConvertPressure(pressureRaw);
 		// HERE YOU GET THE SENSOR VALUES FROM RXBUFFER
 		// ACCORDING TO DATASHEET: GET BOTH TEMPERATURE AND AIR PRESSURE
-
 		// FIRST, USE FUNCTION bmp280_convert_temp() TO CONVERT RAW TEMPERATURE VALUE
     	// THIS WILL INITIALIZE TEMPERATURE COMPENSATION, WHICH IS NEEDED BY PRESSURE CONVERSION
 		// THEN, USE FUNCTION bmp280_convert_pres() TO CONVERT RAW PRESSURE VALUE TO PASCALS
-
     } else {
         System_printf("BMP280: Data read failed!\n");
 		System_flush();
     }
+    return pressure;
 }
 

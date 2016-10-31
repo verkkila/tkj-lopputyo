@@ -1,8 +1,8 @@
 # invoke SourceDir generated makefile for empty.pem3
 empty.pem3: .libraries,empty.pem3
 .libraries,empty.pem3: package/cfg/empty_pem3.xdl
-	$(MAKE) -f /home/tsei/workspace_v6_1_3/Lopputyo_/src/makefile.libs
+	$(MAKE) -f C:\Users\Valtteri\Documents\tkj-lopputyo/src/makefile.libs
 
 clean::
-	$(MAKE) -f /home/tsei/workspace_v6_1_3/Lopputyo_/src/makefile.libs clean
+	$(MAKE) -f C:\Users\Valtteri\Documents\tkj-lopputyo/src/makefile.libs clean
 

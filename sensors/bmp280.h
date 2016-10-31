@@ -30,7 +30,7 @@
 #define BMP280_REG_P9			0x9E
 */
 
-void bmp280_setup(I2C_Handle *i2c);
-void bmp280_get_data(I2C_Handle *i2c, double *pres, double *temp);
+void BMP280_Setup(I2C_Handle *i2c);
+float BMP280_GetPressure(I2C_Handle *i2c);
 
 #endif /* BMP280_H_ */

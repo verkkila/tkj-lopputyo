@@ -1,7 +1,5 @@
 
 #include <stdio.h>
-#include <math.h>
-#include <string.h>
 
 /* XDCtools files */
 #include <xdc/std.h>
@@ -18,6 +16,8 @@
 #include <ti/drivers/power/PowerCC26XX.h>
 #include <ti/mw/display/Display.h>
 #include <ti/mw/display/DisplayExt.h>
+
+#include "util/math.h"
 
 /* Board Header files */
 #include "Board.h"
@@ -65,8 +65,8 @@ PIN_Config cLed[] = {
 };
 
 /* Handle power button */
-Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId) {
-
+Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
+{
     Display_clear(hDisplay);
     Display_close(hDisplay);
     Task_sleep(100000 / Clock_tickPeriod);
@@ -83,7 +83,8 @@ Void ledButtonFxn(PIN_Handle handle, PIN_Id pinId)
 }
 
 /* Communication Task */
-Void commFxn(UArg arg0, UArg arg1) {
+Void commFxn(UArg arg0, UArg arg1)
+{
 	char		payload[16];
 	uint16_t	sender;
 
@@ -111,12 +112,12 @@ Void commFxn(UArg arg0, UArg arg1) {
     }
 }
 
-Void taskFxn(UArg arg0, UArg arg1) {
+Void taskFxn(UArg arg0, UArg arg1)
+{
 
     I2C_Handle      i2c;
     I2C_Params      i2cParams;
-    double			pres, temp, temp2, lux;
-    char			tempstr[32];
+    char			screenText[16];
     
     /* Create I2C for usage */
     I2C_Params_init(&i2cParams);
@@ -124,13 +125,12 @@ Void taskFxn(UArg arg0, UArg arg1) {
     i2c = I2C_open(Board_I2C0, &i2cParams);
     if (i2c == NULL) {
         System_abort("Error Initializing I2C\n");
-    }
-    else {
+    } else {
         System_printf("I2C Initialized!\n");
     }
-    bmp280_setup(&i2c);
-    tmp007_setup(&i2c);
-    opt3001_setup(&i2c);
+    //bmp280_setup(&i2c);
+    TMP007_Setup(&i2c);
+    OPT3001_Setup(&i2c);
     // SETUP SENSORS HERE
 
     /* Display */
@@ -146,18 +146,16 @@ Void taskFxn(UArg arg0, UArg arg1) {
     Display_clear(hDisplay);
 
     while (1) {
-    	bmp280_get_data(&i2c, &pres, &temp);
-    	temp2 = tmp007_get_data(&i2c);
-    	lux = opt3001_get_data(&i2c);
-    	sprintf(tempstr, "BMP280: %f %f TMP007: %f OPT3001: %f", pres, temp, temp2, lux);
-    	System_printf("%s\n", tempstr);
-    	System_flush();
+    	float temp = TMP007_GetTemperature(&i2c);
+    	float lum = OPT3001_GetLuminosity(&i2c);
+    	sprintf(screenText, "T:%.2f L:%.2f", temp, lum);
+    	Display_print0(hDisplay, 0, 0,screenText);
     	Task_sleep(1000000 / Clock_tickPeriod);
     }
 }
 
-Int main(void) {
-
+Int main(void)
+{
     // Task variables
 	Task_Handle task;
 	Task_Params taskParams;
@@ -178,10 +176,10 @@ Int main(void) {
 
 	hButton0 = PIN_open(&sButton0, cButton0);
 	if (!hButton0) {
-		System_abort("Erroria.\n");
+		System_abort("Error initializing button0.\n");
 	}
 	if (PIN_registerIntCb(hButton0, &ledButtonFxn) != 0) {
-		System_abort("Erroria2.\n");
+		System_abort("Error registering button0 callback.\n");
 	}
 
     /* Leds */
@@ -213,7 +211,6 @@ Int main(void) {
     if (taskComm == NULL) {
     	System_abort("Task create failed!");
     }
-
     System_printf("Hello world!\n");
     System_flush();
     
