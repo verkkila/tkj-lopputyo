@@ -170,8 +170,7 @@ void getAres() {
   }
 }
 
-void mpu9250_setup(I2C_Handle *i2c_orig) {
-
+void MPU9250_Setup(I2C_Handle *i2c_orig) {
 	i2c = *i2c_orig;
 
 	System_printf("MPU9250: Setup start...\n");
@@ -199,7 +198,7 @@ void mpu9250_setup(I2C_Handle *i2c_orig) {
 	System_flush();
 }
 
-void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *gx, float *gy, float *gz) {
+void MPU9250_GetData(I2C_Handle *i2c, vec3f *accel, vec3f *gyro) {
 
 	uint8_t rawData[14];  // Register data
 	int16_t data[7]; // Raw data values
@@ -207,19 +206,27 @@ void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *g
 	/* Read the 14 raw data registers into data array */
 	readByte( ACCEL_XOUT_H, 14, rawData);
 
+	data[0] = (rawData[0] << 8) | rawData[2];
+	data[1] = (rawData[2] << 8) | rawData[3];
+	data[2] = (rawData[4] << 8) | rawData[5];
+
+	data[4] = (rawData[8] << 8) | rawData[9];
+	data[5] = (rawData[10] << 8) | rawData[11];
+	data[6] = (rawData[12] << 8) | rawData[13];
+
 	// HERE TURN THE MSB AND LSB INTO A SIGNED 16-BIT VALUE
 	// AND STORE IT INTO GIVEN VARIABLE data[7]
 
 	/* Now we'll calculate the accleration value into actual g's */
-	*ax = (float)data[0]*aRes - accelBias[0];
-	*ay = (float)data[1]*aRes - accelBias[1];
-	*az = (float)data[2]*aRes - accelBias[2];
+	accel->x = (float)data[0]*aRes - accelBias[0];
+	accel->y = (float)data[1]*aRes - accelBias[1];
+	accel->z = (float)data[2]*aRes - accelBias[2];
 
 	/* Calculate the gyro value into actual degrees per second */
 	/* If you want raw data, multiplying with gRes is not needed */
-	*gx = (float)data[4]*gRes;
-	*gy = (float)data[5]*gRes;
-	*gz = (float)data[6]*gRes;
+	gyro->x = (float)data[4]*gRes;
+	gyro->y = (float)data[5]*gRes;
+	gyro->z = (float)data[6]*gRes;
 }
 
 void initMPU9250() {

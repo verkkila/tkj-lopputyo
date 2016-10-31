@@ -115,7 +115,6 @@ void BMP280_Setup(I2C_Handle *i2c) {
     i2cTransaction.readCount = 0;
 
     if (I2C_transfer(*i2c, &i2cTransaction)) {
-
         System_printf("BMP280: Ctrl meas write ok\n");
     } else {
         System_printf("BMP280: Ctrl meas write failed!\n");

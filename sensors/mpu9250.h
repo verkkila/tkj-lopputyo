@@ -13,8 +13,9 @@
 #define MPU9250_H_
 
 #include <ti/drivers/I2C.h>
+#include "util/vec3f.h"
 
-void mpu9250_setup(I2C_Handle *i2c);
-void mpu9250_get_data(I2C_Handle *i2c, float *ax, float *ay, float *az, float *gx, float *gy, float *gz);
+void MPU9250_Setup(I2C_Handle *i2c_orig);
+void MPU9250_GetData(I2C_Handle *i2c, vec3f *accel, vec3f *gyro);
 
 #endif /* MPU9250_H_ */

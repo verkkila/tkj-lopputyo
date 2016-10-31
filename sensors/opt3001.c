@@ -72,7 +72,7 @@ float OPT3001_GetLuminosity(I2C_Handle *i2c) {
 			luminosityRaw = (rxBuffer[0] << 8) | rxBuffer[1];
 			int exp = luminosityRaw >> 12;
 			int factor = luminosityRaw & 0x0FFF;
-			lux = 0.01 * ipow2(exp) * factor;
+			lux = 0.01 * pow2(exp) * factor;
 		} else {
 			System_printf("OPT3001: Data read failed!\n");
 			System_flush();

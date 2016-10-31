@@ -19,6 +19,7 @@ ORDERED_OBJS += \
 "./sensors/opt3001.obj" \
 "./sensors/tmp007.obj" \
 "./util/math.obj" \
+"./util/vec3f.obj" \
 "./wireless/CWC_CC2650_154Drv.obj" \
 "./wireless/CWC_IntegrTest.obj" \
 "./wireless/ERRORS.obj" \
@@ -172,8 +173,8 @@ Lopputyo_.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)$(GEN_CMDS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "CC2650STK.d" "ccfg.d" "main.d" "sensors\bmp280.d" "sensors\hdc1000.d" "sensors\mpu9250.d" "sensors\opt3001.d" "sensors\tmp007.d" "util\math.d" "wireless\CWC_CC2650_154Drv.d" "wireless\CWC_IntegrTest.d" "wireless\ERRORS.d" "wireless\comm_lib.d" 
-	-$(RM) "CC2650STK.obj" "ccfg.obj" "main.obj" "sensors\bmp280.obj" "sensors\hdc1000.obj" "sensors\mpu9250.obj" "sensors\opt3001.obj" "sensors\tmp007.obj" "util\math.obj" "wireless\CWC_CC2650_154Drv.obj" "wireless\CWC_IntegrTest.obj" "wireless\ERRORS.obj" "wireless\comm_lib.obj" 
+	-$(RM) "CC2650STK.d" "ccfg.d" "main.d" "sensors\bmp280.d" "sensors\hdc1000.d" "sensors\mpu9250.d" "sensors\opt3001.d" "sensors\tmp007.d" "util\math.d" "util\vec3f.d" "wireless\CWC_CC2650_154Drv.d" "wireless\CWC_IntegrTest.d" "wireless\ERRORS.d" "wireless\comm_lib.d" 
+	-$(RM) "CC2650STK.obj" "ccfg.obj" "main.obj" "sensors\bmp280.obj" "sensors\hdc1000.obj" "sensors\mpu9250.obj" "sensors\opt3001.obj" "sensors\tmp007.obj" "util\math.obj" "util\vec3f.obj" "wireless\CWC_CC2650_154Drv.obj" "wireless\CWC_IntegrTest.obj" "wireless\ERRORS.obj" "wireless\comm_lib.obj" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

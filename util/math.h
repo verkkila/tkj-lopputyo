@@ -13,6 +13,6 @@
 
 static const float POW2_NEGATIVE[];
 
-float ipow2(int exponent);
+float pow2(int exponent);
 
 #endif /* UTIL_MATH_H_ */

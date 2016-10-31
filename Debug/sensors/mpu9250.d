@@ -174,6 +174,7 @@ sensors/mpu9250.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2
 sensors/mpu9250.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/gpio.h
 sensors/mpu9250.obj: C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/inc/hw_gpio.h
 sensors/mpu9250.obj: ../sensors/mpu9250.h
+sensors/mpu9250.obj: C:/Users/Valtteri/Documents/tkj-lopputyo/util/vec3f.h
 
 ../sensors/mpu9250.c: 
 C:/ti/ccsv6/tools/compiler/ti-cgt-arm_15.12.1.LTS/include/inttypes.h: 
@@ -349,3 +350,4 @@ C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverli
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/driverlib/gpio.h: 
 C:/ti/tirtos_cc13xx_cc26xx_2_20_00_06/products/cc26xxware_2_24_02_17202/inc/hw_gpio.h: 
 ../sensors/mpu9250.h: 
+C:/Users/Valtteri/Documents/tkj-lopputyo/util/vec3f.h: 

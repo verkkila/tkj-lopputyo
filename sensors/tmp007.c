@@ -46,7 +46,7 @@ float TMP007_GetTemperature(I2C_Handle *i2c)
 			int isBitSet = (temperatureRaw >> i) & 1;
 			int exp = i - 7;
 			if (isBitSet) {
-				temperature += ipow2(exp);
+				temperature += pow2(exp);
 			}
 		}
 

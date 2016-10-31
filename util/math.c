@@ -19,7 +19,7 @@ static const float POW2_NEGATIVE[] = {
 	0.00390625f	/*1/2^8*/
 };
 
-float ipow2(int exponent)
+float pow2(int exponent)
 {
 	assert(exponent >= -8 && exponent < 32);
 	if (exponent < 1)
