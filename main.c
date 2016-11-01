@@ -27,6 +27,15 @@
 #include "wireless/comm_main.h"
 #include "display/menu.h"
 
+typedef struct {
+	char name[17];
+	char image[8];
+	uint32_t l;
+	uint32_t a;
+	uint32_t r;
+	uint32_t s;
+} aasigotchi_data;
+
 /*Globals*/
 Event_Handle g_hEvent = NULL;
 
