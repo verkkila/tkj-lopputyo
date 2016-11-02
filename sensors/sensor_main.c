@@ -10,72 +10,94 @@
 #define SENSORS_STACKSIZE 4096
 Char sensorStack[SENSORS_STACKSIZE];
 
-I2C_Handle hI2C;
+I2C_Handle *pI2C = NULL;
 
-sensor_display_data sensorDisplayData;
+Clock_Handle	Master_Clock;
+Clock_Handle	TMP007_Clock;
+Clock_Handle	BMP280_Clock;
+Clock_Handle	OPT3001_Clock;
 
-uint32_t a = 0;
-uint32_t r = 0;
-
-Void timer250_Tick(UArg arg)
+Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
-
-}
-
-Void timer500_Tick(UArg arg)
-{
-	Clock_tick();
-	System_printf("500ms\n");
-	System_flush();
-}
-
-Void timer1000_Tick(UArg arg)
-{
-	//laske yhteen kaikki aktiivisuustiedot
-	Clock_tick();
-	System_printf("1000ms\n");
-	System_flush();
-}
-
-Void Sensors_TrackSun()
-{
-	static float oldLuminosity = 0.f, oldTemperature = 0.f;
-	float newLuminosity, newTemperature;
-	newLuminosity = OPT3001_GetLuminosity(&hI2C);
-	newTemperature = TMP007_GetTemperature(&hI2C);
-	if (oldLuminosity > 25.f && newLuminosity > 25.f  &&
-			oldTemperature > 30.f && newTemperature > 30.f) {
-			++a;
-		}
-	sprintf(sensorDisplayData.TMP007, "T:%.2f a: %i", newTemperature, a);
-	sprintf(sensorDisplayData.OPT3001, "L:%.2f", newLuminosity);
-
-	oldLuminosity = newLuminosity;
-	oldTemperature = newTemperature;
-}
-
-Void Sensors_TrackFreshAir()
-{
-	static float oldPressure = 0.f;
-	float newPressure;
-	newPressure = BMP280_GetPressure(&hI2C);
-	if (oldPressure > 109339.0f && newPressure > 109339.f) {
-		++r;
+	switch (msg->slaveAddress) {
+	case Board_TMP007_ADDR:
+		TMP007_HandleMsg(msg, transfer);
+		break;
+	case Board_OPT3001_ADDR:
+		OPT3001_HandleMsg(msg, transfer);
+		break;
+	case Board_BMP280_ADDR:
+		BMP280_HandleMsg(msg, transfer);
+		break;
+	default:
+		break;
 	}
-	sprintf(sensorDisplayData.BMP280, "P:%.2f r:%i", newPressure, r);
-	oldPressure = newPressure;
+}
+
+Void TMP007_Tick(UArg arg)
+{
+	TMP007_Read();
+	//System_printf("TMP007 tick %i\n", Clock_getTicks());
+	//System_flush();
+}
+
+Void BMP280_Tick(UArg arg)
+{
+	BMP280_Read();
+	//System_printf("BMP280 ticks %i\n", Clock_getTicks());
+	//System_flush();
+}
+
+Void OPT3001_Tick(UArg arg)
+{
+	OPT3001_Read();
+	//System_printf("OPT3001 ticks %i\n", Clock_getTicks());
+	//System_flush();
+}
+
+
+Void Master_Clock_Tick(UArg arg)
+{
+	Event_post(g_hEvent, START_CONVERSIONS);
+	/*
+	*/
 }
 
 Void Sensors_ReadAll(UArg arg0, UArg arg1)
 {
-	Clock_Handle	clock250;
-	Clock_Handle	clock500;
-	Clock_Handle	clock1000;
-	Clock_Params	testClockParams;
 	I2C_Handle		i2c;
 	I2C_Params      i2cParams;
+	Clock_Params	Master_Params;
+	Clock_Params	TMP007_Params;
+	Clock_Params	BMP280_Params;
+	Clock_Params	OPT3001_Params;
+
+	Clock_Params_init(&TMP007_Params);
+	TMP007_Params.period = TMP007_READ_RATE_MS * 1000 / Clock_tickPeriod;
+	TMP007_Clock = Clock_create(TMP007_Tick, 0, &TMP007_Params, NULL);
+
+	Clock_Params_init(&BMP280_Params);
+	BMP280_Params.period = BMP280_READ_RATE_MS * 1000 / Clock_tickPeriod;
+	BMP280_Clock = Clock_create(BMP280_Tick, 0, &BMP280_Params, NULL);
+
+	Clock_Params_init(&OPT3001_Params);
+	OPT3001_Params.period = OPT3001_READ_RATE_MS * 1000 / Clock_tickPeriod;
+	OPT3001_Clock = Clock_create(OPT3001_Tick, 0, &OPT3001_Params, NULL);
+
+	Clock_Params_init(&Master_Params);
+	Master_Params.period = CONVERSION_RATE_MS * 1000 / Clock_tickPeriod;
+	Master_Clock = Clock_create(Master_Clock_Tick, CONVERSION_RATE_MS * 1000 / Clock_tickPeriod, &Master_Params, NULL);
+
+	if (TMP007_Clock == NULL ||
+		BMP280_Clock == NULL ||
+		OPT3001_Clock == NULL ||
+		Master_Clock == NULL) {
+		System_abort("Failed to create sensor clocks.");
+	}
 	/* Create I2C for usage */
 	I2C_Params_init(&i2cParams);
+	i2cParams.transferMode = I2C_MODE_CALLBACK;
+	i2cParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_CompleteFxn;
 	i2cParams.bitRate = I2C_400kHz;
 	i2c = I2C_open(Board_I2C0, &i2cParams);
 	if (i2c == NULL) {
@@ -83,33 +105,38 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 	} else {
 		System_printf("I2C Initialized!\n");
 	}
-	hI2C = i2c;
-	Clock_Params_init(&testClockParams);
-	testClockParams.period = Clock_tickPeriod;
-	clock250 = Clock_create(timer250_Tick, 0, &testClockParams, NULL);
-	testClockParams.period = 500000 / Clock_tickPeriod;
-	clock500 = Clock_create(timer500_Tick, 0, &testClockParams, NULL);
-	testClockParams.period = 1000000 / Clock_tickPeriod;
-	clock1000 = Clock_create(timer1000_Tick, 0, &testClockParams, NULL);
-    if (clock250 == NULL ||
-    	clock500 == NULL ||
-		clock1000 == NULL) {
-    	System_abort("Failed to create clocks!");
-    }
-	BMP280_Setup(&i2c);
+	pI2C = &i2c;
+
     TMP007_Setup(&i2c);
     OPT3001_Setup(&i2c);
+    BMP280_Setup(&i2c);
 
-    /*
-    Clock_start(clock250);
-    Clock_start(clock500);
-    Clock_start(clock1000);
-    */
+    Event_pend(g_hEvent, SENSOR_SETUP_COMPLETE, Event_Id_NONE, BIOS_WAIT_FOREVER);
+
+    Clock_start(TMP007_Clock);
+    Clock_start(BMP280_Clock);
+    Clock_start(OPT3001_Clock);
+    Clock_start(Master_Clock);
+
     while (1) {
-    	Sensors_TrackSun();
-    	Sensors_TrackFreshAir();
-		Event_post(g_hEvent, DATA_READ_COMPLETE);
-		Task_sleep(1000000 / Clock_tickPeriod);
+    	Event_pend(g_hEvent, START_CONVERSIONS, Event_Id_NONE, BIOS_WAIT_FOREVER);
+		System_printf("Converting values.\n");
+
+		Clock_stop(TMP007_Clock);
+		Clock_stop(OPT3001_Clock);
+		Clock_stop(BMP280_Clock);
+
+		TMP007_ConvertData();
+		OPT3001_ConvertData();
+		BMP280_ConvertData();
+
+		Clock_start(TMP007_Clock);
+		Clock_start(OPT3001_Clock);
+		Clock_start(BMP280_Clock);
+
+		Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
+		System_flush();
+		//Task_sleep(1000000 / Clock_tickPeriod);
     }
 }
 

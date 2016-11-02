@@ -10,17 +10,27 @@
 #ifndef TMP007_H_
 #define TMP007_H_
 
+#include <stdio.h>
 #include <ti/drivers/I2C.h>
 #include <xdc/runtime/System.h>
+#include <ti/sysbios/knl/Event.h>
+#include <ti/sysbios/knl/Clock.h>
+
 #include "util/math.h"
 #include "Board.h"
+#include "../eventdefs.h"
+#include "sensordefs.h"
 
 #define TMP007_REG_TEMP	0x03
-#define TMP007_REG_TEMP_DIE 0x03
-#define REG_DECIMAL 0x007C
-#define REG_WHOLE 0xFF86
+
+extern I2C_Handle *pI2C;
+extern Event_Handle g_hEvent;
 
 void TMP007_Setup(I2C_Handle *i2c);
-float TMP007_GetTemperature(I2C_Handle *i2c);
+void TMP007_HandleMsg(I2C_Transaction *msg, Bool transfer);
+void TMP007_Read();
+//float TMP007_ConvertTemp(uint16_t temperatureRaw);
+void TMP007_ConvertData();
+//float TMP007_GetTemperature();
 
 #endif /* TMP007_H_ */

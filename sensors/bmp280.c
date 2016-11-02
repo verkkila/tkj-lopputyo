@@ -27,13 +27,20 @@ int16_t  dig_P8;
 int16_t  dig_P9;
 int32_t	 t_fine = 0;
 
-// i2c
-I2C_Transaction i2cTransaction;
-char txBuffer[4];
-char rxBuffer[24];
+static I2C_Transaction readData;
+static I2C_Transaction writeConfig;
+static I2C_Transaction writeMeas;
+static I2C_Transaction writeTrimming;
+static char txBuffer[5];
+static char rxBuffer[24];
 
-static void BMP280_SetTrimming(char *v) {
+static uint32_t rawData_Pres[BMP280_NUM_VALUES];
+static uint32_t rawData_Temp[BMP280_NUM_VALUES];
+static float dataPres[BMP280_NUM_VALUES];
+int bmp280_index = 0;
 
+void BMP280_SetTrimming(char *v)
+{
 	dig_T1 = (v[1] << 8) | v[0];
 	dig_T2 = (v[3] << 8) | v[2];
 	dig_T3 = (v[5] << 8) | v[4];
@@ -89,7 +96,110 @@ static double BMP280_ConvertPressure(uint32_t adc_P) {
 	return ret;
 }
 
+void BMP280_Setup(I2C_Handle *i2c)
+{
+	writeConfig.slaveAddress = Board_BMP280_ADDR;
+	txBuffer[0] = BMP280_REG_CONFIG;
+	txBuffer[1] = 0x40;
+	writeConfig.writeBuf = txBuffer;
+	writeConfig.writeCount = 2;
+	writeConfig.readBuf = NULL;
+	writeConfig.readCount = 0;
+
+	writeMeas.slaveAddress = Board_BMP280_ADDR;
+	txBuffer[2] = BMP280_REG_CTRL_MEAS;
+	txBuffer[3] = 0x2F;
+	writeMeas.writeBuf = &txBuffer[2];
+	writeMeas.writeCount = 2;
+	writeMeas.readBuf = NULL;
+	writeMeas.readCount = 0;
+
+	writeTrimming.slaveAddress = Board_BMP280_ADDR;
+	txBuffer[4] = BMP280_REG_T1;
+	writeTrimming.writeBuf = &txBuffer[4];
+	writeTrimming.writeCount = 1;
+	writeTrimming.readBuf = rxBuffer;
+	writeTrimming.readCount = 24;
+
+	I2C_transfer(*pI2C, &writeConfig);
+	I2C_transfer(*pI2C, &writeMeas);
+	I2C_transfer(*pI2C, &writeTrimming);
+}
+
+static void BMP280_AddData(char *buf)
+{
+	//System_printf("BMP280: AddData index: %i tick: %i\n", bmp280_index, Clock_getTicks() * Clock_tickPeriod / 1000);
+	System_flush();
+	if (bmp280_index >= BMP280_NUM_VALUES) {
+		System_printf("BMP280 raw data buffers are full, waiting for conversion.\n");
+	} else {
+		rawData_Pres[bmp280_index] = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
+		rawData_Temp[bmp280_index] = (buf[3] << 12) | (buf[4] << 4) | (buf[5] >> 4);
+		++bmp280_index;
+	}
+}
+
+void BMP280_Read()
+{
+	txBuffer[0] = BMP280_REG_PRES;
+	readData.slaveAddress = Board_BMP280_ADDR;
+	readData.writeBuf = txBuffer;
+	readData.writeCount = 1;
+	readData.readBuf = rxBuffer;
+	readData.readCount = 6;
+
+	I2C_transfer(*pI2C, &readData);
+}
+
+void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer)
+{
+	uint8_t reg = *(uint8_t*)msg->writeBuf;
+	switch (reg) {
+	case BMP280_REG_CONFIG:
+		if (transfer)
+			System_printf("BMP280: Config write ok!\n");
+		else
+			System_abort("BMP280: Config write failed!\n");
+		break;
+	case BMP280_REG_CTRL_MEAS:
+		if (transfer)
+			System_printf("BMP280: Ctrl meas write ok!\n");
+		else
+			System_abort("BMP280: Ctrl meas write failed!\n");
+		break;
+	case BMP280_REG_T1:
+		if (transfer) {
+			System_printf("BMP280: Trimming write ok!\n");
+			BMP280_SetTrimming(msg->readBuf);
+			Event_post(g_hEvent, SENSOR_SETUP_COMPLETE);
+		} else
+			System_abort("BMP280: Trimming write failed!\n");
+		break;
+	case BMP280_REG_PRES:
+		BMP280_AddData(msg->readBuf);
+		Event_post(g_hEvent, BMP280_READ_COMPLETE);
+		break;
+	default:
+		break;
+	}
+}
+
+void BMP280_ConvertData()
+{
+	int i;
+
+	System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_index, BMP280_NUM_VALUES);
+	for (i = 0; i <= bmp280_index; ++i) {
+		BMP280_ConvertTemperature(rawData_Temp[i]);
+		dataPres[i] = BMP280_ConvertPressure(rawData_Pres[i]);
+	}
+	bmp280_index = 0;
+	System_printf("BMP280 conversion complete.\n");
+}
+
+/*
 void BMP280_Setup(I2C_Handle *i2c) {
+	pI2C = i2c;
 
     i2cTransaction.slaveAddress = Board_BMP280_ADDR;
     txBuffer[0] = BMP280_REG_CONFIG;
@@ -137,22 +247,27 @@ void BMP280_Setup(I2C_Handle *i2c) {
 
     BMP280_SetTrimming(rxBuffer);
 }
+*/
 
-float BMP280_GetPressure(I2C_Handle *i2c) {
+
+
+/*
+float BMP280_GetPressure() {
+	I2C_Transaction readData;
 	uint32_t pressureRaw = 0;
 	uint32_t temperatureRaw = 0;
 	float pressure = 0.0f;
 
 	txBuffer[0] = BMP280_REG_PRES;
-    i2cTransaction.slaveAddress = Board_BMP280_ADDR;
-    i2cTransaction.writeBuf = txBuffer;
-    i2cTransaction.writeCount = 1;
-    i2cTransaction.readBuf = rxBuffer;
-    i2cTransaction.readCount = 6;
+	readData.slaveAddress = Board_BMP280_ADDR;
+	readData.writeBuf = txBuffer;
+	readData.writeCount = 1;
+	readData.readBuf = rxBuffer;
+	readData.readCount = 6;
 
-    if (I2C_transfer(*i2c, &i2cTransaction)) {
-    	pressureRaw = (rxBuffer[0] << 12) | (rxBuffer[1] << 4) | (rxBuffer[2] >> 4);
-    	temperatureRaw = (rxBuffer[3] << 12) | (rxBuffer[4] << 4) | (rxBuffer[5] >> 4);
+    if (I2C_transfer(*pI2C, &readData)) {
+    	pressureRaw = (BMP280_rxBuf[0] << 12) | (BMP280_rxBuf[1] << 4) | (BMP280_rxBuf[2] >> 4);
+    	temperatureRaw = (BMP280_rxBuf[3] << 12) | (BMP280_rxBuf[4] << 4) | (BMP280_rxBuf[5] >> 4);
     	BMP280_ConvertTemperature(temperatureRaw);
     	pressure = BMP280_ConvertPressure(pressureRaw);
 		// HERE YOU GET THE SENSOR VALUES FROM RXBUFFER
@@ -166,4 +281,4 @@ float BMP280_GetPressure(I2C_Handle *i2c) {
     }
     return pressure;
 }
-
+*/

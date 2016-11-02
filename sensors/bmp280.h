@@ -11,6 +11,11 @@
 #define BMP280_H_
 
 #include <ti/drivers/I2C.h>
+#include <ti/sysbios/knl/Event.h>
+#include <ti/sysbios/knl/Clock.h>
+
+#include "../eventdefs.h"
+#include "sensordefs.h"
 
 #define BMP280_REG_CTRL_MEAS	0xF4
 #define BMP280_REG_CONFIG		0xF5
@@ -30,7 +35,13 @@
 #define BMP280_REG_P9			0x9E
 */
 
+extern I2C_Handle *pI2C;
+extern Event_Handle g_hEvent;
+
 void BMP280_Setup(I2C_Handle *i2c);
-float BMP280_GetPressure(I2C_Handle *i2c);
+void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer);
+void BMP280_Read();
+void BMP280_ConvertData();
+float BMP280_GetPressure();
 
 #endif /* BMP280_H_ */

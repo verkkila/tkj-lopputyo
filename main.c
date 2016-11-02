@@ -86,7 +86,7 @@ Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
 
 Void ledButtonFxn(PIN_Handle handle, PIN_Id pinId)
 {
-	PIN_setOutputValue(hLed, Board_LED0, !PIN_getOutputValue(Board_LED0));
+	//PIN_setOutputValue(hLed, Board_LED0, !PIN_getOutputValue(Board_LED0));
 }
 
 Int main(void)
@@ -124,7 +124,7 @@ Int main(void)
 
     /* Task */
     Sensors_Start();
-    Menu_Start();
+    //Menu_Start();
     Init6LoWPAN();
     Comm_Start();
 

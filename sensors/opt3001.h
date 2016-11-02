@@ -10,14 +10,25 @@
 #ifndef OPT3001_H_
 #define OPT3001_H_
 
+#include <string.h>
+#include <math.h>
+
 #include <ti/drivers/I2C.h>
+#include <xdc/runtime/System.h>
 #include "util/math.h"
+#include "Board.h"
+#include "sensordefs.h"
 
 #define OPT3001_REG_RESULT		0x0
 #define OPT3001_REG_CONFIG		0x1
 #define OPT3001_DATA_READY		0x80
 
+extern I2C_Handle *pI2C;
+
 void OPT3001_Setup(I2C_Handle *i2c);
-float OPT3001_GetLuminosity(I2C_Handle *i2c);
+void OPT3001_HandleMsg(I2C_Transaction *msg, Bool transfer);
+void OPT3001_Read();
+void OPT3001_ConvertData();
+float OPT3001_GetLuminosity();
 
 #endif /* OPT3001_H_ */

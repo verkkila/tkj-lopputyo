@@ -8,13 +8,97 @@
  */
 #include "tmp007.h"
 
+static I2C_Transaction readData;
+static char txBuffer[1];
+static char rxBuffer[2];
+
+uint16_t rawData[TMP007_NUM_VALUES];
+float data[TMP007_NUM_VALUES];
+int tmp007_index = 0;
+
 void TMP007_Setup(I2C_Handle *i2c)
 {
 	System_printf("TMP007: Config not needed!\n");
     System_flush();
 }
 
-float TMP007_GetTemperature(I2C_Handle *i2c)
+void TMP007_Read()
+{
+	txBuffer[0] = TMP007_REG_TEMP;
+	readData.slaveAddress = Board_TMP007_ADDR;
+	readData.writeBuf = txBuffer;
+	readData.writeCount = 1;
+	readData.readBuf = rxBuffer;
+	readData.readCount = 2;
+	I2C_transfer(*pI2C, &readData);
+}
+
+static void TMP007_AddData(char *buf)
+{
+	//System_printf("TMP007: AddData index %i tick %i\n", tmp007_index, Clock_getTicks() * Clock_tickPeriod / 1000);
+	System_flush();
+	if (tmp007_index >= TMP007_NUM_VALUES) {
+		System_printf("TMP007 raw data buffer is full, waiting for conversion.\n");
+	} else {
+		rawData[tmp007_index] = (buf[0] << 8) | buf[1];
+		++tmp007_index;
+	}
+}
+
+void TMP007_HandleMsg(I2C_Transaction *msg, Bool transfer)
+{
+	uint8_t reg = *(uint8_t*)msg->writeBuf;
+	switch (reg) {
+	case TMP007_REG_TEMP:
+		TMP007_AddData(msg->readBuf);
+		Event_post(g_hEvent, TMP007_READ_COMPLETE);
+		break;
+	default:
+		break;
+	}
+}
+
+static float TMP007_ConvertTemperature(uint16_t temperatureRaw)
+{
+	float temperature = 0.f;
+	int i, isNegative;
+	isNegative = temperatureRaw & 0x8000;
+
+	if (temperatureRaw & 1) /*check data invalid bit*/
+		return 0.0f;
+
+	if (isNegative) {
+		temperatureRaw = ~(temperatureRaw) + 1; /*two's complement*/
+	}
+
+	for (i = 2; i < 15; ++i) {
+		int isBitSet = (temperatureRaw >> i) & 1;
+		int exp = i - 7;
+		if (isBitSet) {
+			temperature += pow2(exp);
+		}
+	}
+
+	if (isNegative)
+		temperature *= -1;
+
+	return temperature;
+}
+
+void TMP007_ConvertData()
+{
+	int i;
+
+	System_printf("TMP007: Starting conversion, index: (%i/%i)\n", tmp007_index, TMP007_NUM_VALUES);
+	for (i = 0; i <= tmp007_index; ++i) {
+		data[i] = TMP007_ConvertTemperature(rawData[i]);
+	}
+	tmp007_index = 0;
+	System_printf("TMP007 conversion complete.\n");
+}
+
+/*
+float TMP007_GetTemperature()
 {
 	float temperature = 0.0f;
 	uint16_t temperatureRaw = 0;
@@ -29,17 +113,17 @@ float TMP007_GetTemperature(I2C_Handle *i2c)
     i2cTransaction.readBuf = rxBuffer;
     i2cTransaction.readCount = 2;
 
-	if (I2C_transfer(*i2c, &i2cTransaction)) {
+	if (I2C_transfer(*pI2C, &i2cTransaction)) {
 		int i, isNegative;
 		temperatureRaw = (rxBuffer[0] << 8) | rxBuffer[1];
 		//temperatureRaw = 0b1100000001000000; //-127.5
 		isNegative = temperatureRaw & 0x8000;
 
-		if (temperatureRaw & 1) /*check data invalid bit*/
+		if (temperatureRaw & 1)
 			return 0.0f;
 
 		if (isNegative) {
-			temperatureRaw = ~(temperatureRaw) + 1; /*two's complement*/
+			temperatureRaw = ~(temperatureRaw) + 1;
 		}
 
 		for (i = 2; i < 15; ++i) {
@@ -52,8 +136,6 @@ float TMP007_GetTemperature(I2C_Handle *i2c)
 
 		if (isNegative)
 			temperature *= -1;
-
-		System_flush();
 	} else {
 
 		System_printf("TMP007: Data read failed!\n");
@@ -61,5 +143,5 @@ float TMP007_GetTemperature(I2C_Handle *i2c)
 	}
 	return temperature;
 }
-
+*/
 
