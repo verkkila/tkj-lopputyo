@@ -36,8 +36,8 @@ static char rxBuffer[24];
 
 static uint32_t rawData_Pres[BMP280_NUM_VALUES];
 static uint32_t rawData_Temp[BMP280_NUM_VALUES];
-static float dataPres[BMP280_NUM_VALUES];
-int bmp280_index = 0;
+float BMP280_presData[BMP280_NUM_VALUES];
+//int bmp280_index;
 
 void BMP280_SetTrimming(char *v)
 {
@@ -191,9 +191,9 @@ void BMP280_ConvertData()
 	System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_index, BMP280_NUM_VALUES);
 	for (i = 0; i <= bmp280_index; ++i) {
 		BMP280_ConvertTemperature(rawData_Temp[i]);
-		dataPres[i] = BMP280_ConvertPressure(rawData_Pres[i]);
+		BMP280_presData[i] = BMP280_ConvertPressure(rawData_Pres[i]);
 	}
-	bmp280_index = 0;
+	//bmp280_index = 0;
 	System_printf("BMP280 conversion complete.\n");
 }
 

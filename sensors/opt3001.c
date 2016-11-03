@@ -17,8 +17,8 @@ static char txBuffer[4];
 static char rxBuffer[4];
 
 static uint16_t rawData[OPT3001_NUM_VALUES];
-static float data[OPT3001_NUM_VALUES];
-static int opt3001_index = 0;
+float OPT3001_data[OPT3001_NUM_VALUES];
+//int opt3001_index;
 
 void OPT3001_Setup(I2C_Handle *i2c)
 {
@@ -106,9 +106,9 @@ void OPT3001_ConvertData()
 
 	System_printf("OPT3001: Starting conversion, index: (%i/%i)\n", opt3001_index, OPT3001_NUM_VALUES);
 	for (i = 0; i <= opt3001_index; ++i) {
-		data[i] = OPT3001_ConvertLuminosity(rawData[i]);
+		OPT3001_data[i] = OPT3001_ConvertLuminosity(rawData[i]);
 	}
-	opt3001_index = 0;
+	//opt3001_index = 0;
 	System_printf("OPT3001 conversion complete.\n");
 }
 

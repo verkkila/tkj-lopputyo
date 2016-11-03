@@ -17,6 +17,12 @@ Clock_Handle	TMP007_Clock;
 Clock_Handle	BMP280_Clock;
 Clock_Handle	OPT3001_Clock;
 
+int tmp007_index = 0;
+int bmp280_index = 0;
+int opt3001_index = 0;
+
+float a = 0.f, r = 0.f, l = 0.f;
+
 Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
 	switch (msg->slaveAddress) {
@@ -61,6 +67,35 @@ Void Master_Clock_Tick(UArg arg)
 	Event_post(g_hEvent, START_CONVERSIONS);
 	/*
 	*/
+}
+
+static void AccumulateFreshAir()
+{
+	int i;
+
+	for (i = 0; i < bmp280_index; ++i) {
+		if (BMP280_presData[i] < 109114.f) {
+			int x = 0, x0 = 0, y = 0, y0 = 0;
+			float k;
+			x = i - 1;
+			y = data[i - 1];
+			x0 = i;
+			y0 = data[i];
+			k = (y - y0) / (x - x0);
+			System_printf("Ilmanpaine oli rajan alla, index: %i\n", i);
+			System_flush();
+		}
+	}
+}
+
+static void AccumulateSun()
+{
+
+}
+
+static void AccumulatePhysicalActivity()
+{
+
 }
 
 Void Sensors_ReadAll(UArg arg0, UArg arg1)
@@ -129,6 +164,12 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		TMP007_ConvertData();
 		OPT3001_ConvertData();
 		BMP280_ConvertData();
+
+		AccumulateFreshAir();
+
+		tmp007_index = 0;
+		bmp280_index = 0;
+		opt3001_index = 0;
 
 		Clock_start(TMP007_Clock);
 		Clock_start(OPT3001_Clock);

@@ -13,8 +13,8 @@ static char txBuffer[1];
 static char rxBuffer[2];
 
 uint16_t rawData[TMP007_NUM_VALUES];
-float data[TMP007_NUM_VALUES];
-int tmp007_index = 0;
+float TMP007_data[TMP007_NUM_VALUES];
+//int tmp007_index;
 
 void TMP007_Setup(I2C_Handle *i2c)
 {
@@ -91,9 +91,9 @@ void TMP007_ConvertData()
 
 	System_printf("TMP007: Starting conversion, index: (%i/%i)\n", tmp007_index, TMP007_NUM_VALUES);
 	for (i = 0; i <= tmp007_index; ++i) {
-		data[i] = TMP007_ConvertTemperature(rawData[i]);
+		TMP007_data[i] = TMP007_ConvertTemperature(rawData[i]);
 	}
-	tmp007_index = 0;
+	//tmp007_index = 0;
 	System_printf("TMP007 conversion complete.\n");
 }
 
