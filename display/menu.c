@@ -48,7 +48,7 @@ const uint8_t imgdata_PhysicalActivity[8] = {
 		0b10111101,
 		0b10100101,
 		0b10111101,
-		0b10100101,
+		0b10100001,
 		0b10000001,
 		0b11111111
 };
@@ -59,7 +59,7 @@ const uint8_t imgdata_FreshAir[8] = {
 		0b10111101,
 		0b10100101,
 		0b10111101,
-		0b10100001,
+		0b10100101,
 		0b10000001,
 		0b11111111
 };
@@ -133,13 +133,10 @@ static char subMenu1[SUBMENU1_OPTIONS][12] = {
 };
 
 unsigned int selectedItem = 0;
-unsigned int selectedMenu = MENU_MAIN;
+unsigned int selectedMenu = MENU_SUB1;
 
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 {
-	System_printf("Button0 pressed.\n");
-	System_flush();
-	//PIN_setOutputValue(hLed, Board_LED0, !PIN_getOutputValue(Board_LED0));
 	switch (selectedMenu) {
 	case MENU_MAIN:
 		mainMenu[selectedItem][0] = ' ';

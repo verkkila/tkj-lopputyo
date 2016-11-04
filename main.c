@@ -29,7 +29,6 @@
 
 #include "aasigotchi.h"
 
-
 aasigotchi_data testiGotchi = {
 	.name = "testi",
 	.image = {

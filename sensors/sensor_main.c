@@ -22,8 +22,6 @@ int tmp007_index = 0;
 int bmp280_index = 0;
 int opt3001_index = 0;
 
-float a = 0.f, r = 0.f, l = 0.f;
-
 Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
 	switch (msg->slaveAddress) {
@@ -74,28 +72,28 @@ Void Master_Clock_Tick(UArg arg)
 static void AccumulateSun()
 {
 	int i, max_index;
+	float temp_a;
 
 	max_index = tmp007_index < opt3001_index ? tmp007_index : opt3001_index;
 	for (i = 0; i < max_index; ++i) {
 		if (TMP007_data[i] > TEMPERATURE_THRESHOLD && OPT3001_data[i] > LUMINOSITY_THRESHOLD) {
-			a += TMP007_READ_RATE_MS / 1000.f;
-			System_printf("Auringonottoa...\n", i);
-			System_flush();
+			temp_a += TMP007_READ_RATE_MS / 1000.f;
 		}
 	}
+	currentGotchi->a += floor(temp_a);
 }
 
 static void AccumulateFreshAir()
 {
 	int i;
+	float temp_r;
 
 	for (i = 0; i < bmp280_index; ++i) {
-		if (BMP280_presData[i] < 109114.f) {
-			r += BMP280_READ_RATE_MS / 1000.f;
-			System_printf("Raikasta ilmaa...\n", i);
-			System_flush();
+		if (BMP280_presData[i] < PRESSURE_THRESHOLD) {
+			temp_r += BMP280_READ_RATE_MS / 1000.f;
 		}
 	}
+	currentGotchi->r += floor(temp_r);
 }
 
 static void AccumulatePhysicalActivity()
@@ -203,7 +201,7 @@ Void Sensors_CreateTask()
 	Task_Params_init(&params);
 	params.stackSize = SENSORS_STACKSIZE;
 	params.stack = &sensorStack;
-	params.priority = 3;
+	params.priority = 1;
 
 	task = Task_create(Sensors_ReadAll, &params, NULL);
 	if (task == NULL) {
