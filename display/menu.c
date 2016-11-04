@@ -11,6 +11,7 @@
 Char displayStack[DISPLAY_STACKSIZE];
 
 Display_Handle hDisplay;
+//aasigotchi_data *currentGotchi = NULL;
 
 tRectangle testRect = {
 		.sXMin = 50,
@@ -105,37 +106,148 @@ const tImage img_FreshAir = {
     .pPixel = imgdata_FreshAir
 };
 
+tImage Menu_GetImageFromBitmap(tImage *img, const uint8_t *bitmap)
+{
+	img->BPP = IMAGE_FMT_1BPP_UNCOMP;
+	img->NumColors = 2;
+	img->XSize = 1;
+	img->YSize = 8;
+	img->pPalette = imgPalette;
+	img->pPixel = bitmap;
+}
+
+#define MAINMENU_OPTIONS 4
+static char mainMenu[MAINMENU_OPTIONS][12] = {
+		                   ">Luo uusi",
+						   " Hae/vie",
+                           " Harrasta",
+						   " Help"};
+
+#define SUBMENU1_OPTIONS 5
+static char subMenu1[SUBMENU1_OPTIONS][12] = {
+		                   ">Paluu",
+					       " Aurinko",
+						   " Ilma",
+                           " Liikunta",
+						   " Kaverit"
+};
+
+unsigned int selectedItem = 0;
+unsigned int selectedMenu = MENU_MAIN;
+
+Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
+{
+	System_printf("Button0 pressed.\n");
+	System_flush();
+	//PIN_setOutputValue(hLed, Board_LED0, !PIN_getOutputValue(Board_LED0));
+	switch (selectedMenu) {
+	case MENU_MAIN:
+		mainMenu[selectedItem][0] = ' ';
+		++selectedItem;
+		if (selectedItem >= MAINMENU_OPTIONS)
+			selectedItem = MM_OPT_CREATENEW;
+		mainMenu[selectedItem][0] = '>';
+		break;
+	case MENU_SUB1:
+		subMenu1[selectedItem][0] = ' ';
+		++selectedItem;
+		if (selectedItem >= SUBMENU1_OPTIONS)
+			selectedItem = SM1_OPT_RETURN;
+		subMenu1[selectedItem][0] = '>';
+		break;
+	}
+
+	Event_post(g_hEvent, BUTTON_PRESSED);
+}
+
+static void Menu_UpdateState(void)
+{
+	switch (selectedMenu) {
+	case MENU_MAIN:
+		switch (selectedItem) {
+		case MM_OPT_CREATENEW:
+			break;
+		case MM_OPT_LOAD:
+			break;
+		case MM_OPT_ACTIVITIES:
+			selectedMenu = MENU_SUB1;
+			selectedItem = 0;
+			break;
+		case MM_OPT_HELP:
+			break;
+		default:
+			break;
+		}
+		break;
+	case MENU_SUB1:
+		switch (selectedItem) {
+		case SM1_OPT_RETURN:
+			System_printf("Paluu.\n");
+			selectedMenu = MENU_MAIN;
+			selectedItem = 0;
+			break;
+		case SM1_OPT_SUN:
+			System_printf("Auringonottoa.\n");
+			break;
+		case SM1_OPT_FRESHAIR:
+			System_printf("Raikasta ilmaa.\n");
+			break;
+		case SM1_OPT_PHYS:
+			System_printf("Liikuntaa.\n");
+			break;
+		case SM1_OPT_HELLO:
+			System_printf("Morjenstamista.\n");
+			break;
+		}
+		break;
+	}
+	System_flush();
+}
+
+Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
+{
+	System_printf("Button1 pressed value: %i.\n", PIN_getOutputValue(Board_BUTTON1));
+	System_flush();
+	//PIN_setOutputValue(hLed, Board_LED1, !PIN_getOutputValue(Board_LED1));
+	Menu_UpdateState();
+	Event_post(g_hEvent, BUTTON_PRESSED);
+}
+
 Void DrawMainMenu(tContext *pContext)
 {
-
+	int i;
 	Display_print0(hDisplay, 0, 6, "Menu");
 
-	GrImageDraw(pContext, &img_Sun, 8, 64);
+	for (i = 0; i < MAINMENU_OPTIONS; ++i) {
+		Display_print0(hDisplay, i+3, 2, mainMenu[i]);
+	}
+	GrLineDraw(pContext, 0, 58, 96, 58);
+	Display_print0(hDisplay, 8, 0, currentGotchi->name);
+	tImage test;
+	Menu_GetImageFromBitmap(&test, currentGotchi->image);
+	GrImageDraw(pContext, &test, 0, 9*8);
+}
 
-	GrImageDraw(pContext, &img_Physical, 8, 72);
+Void DrawSubMenu1(tContext *pContext)
+{
+	int i;
+	Display_print0(hDisplay, 0, 2, "Harrastus");
+
+	GrImageDraw(pContext, &img_Sun, 8, 48);
+	Display_print1(hDisplay, 7, 1, "%i", currentGotchi->a);
+
+	GrImageDraw(pContext, &img_Physical, 8, 64);
+	Display_print1(hDisplay, 9, 1, "%i", currentGotchi->l);
 
 	GrImageDraw(pContext, &img_FreshAir, 8, 80);
+	Display_print1(hDisplay, 11, 1, "%i", currentGotchi->r);
 
-	/*
-	Display_print0(hDisplay, 0, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 1, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 2, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 3, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 4, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 5, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 6, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 7, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 8, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 9, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 10, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 11, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 12, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 13, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 14, 0, "0123456789ABCDEF");
-	Display_print0(hDisplay, 15, 0, "0123456789ABCDEF");
-	*/
-	//GrRectFill(pContext, &testRect);
+	for (i = 0; i < SUBMENU1_OPTIONS; ++i) {
+		Display_print0(hDisplay, i+1, 2, subMenu1[i]);
+	}
 }
+
+
 
 Void DrawScreen(UArg arg0, UArg arg1)
 {
@@ -152,14 +264,19 @@ Void DrawScreen(UArg arg0, UArg arg1)
 
 	while (1) {
 		tContext *context = DisplayExt_getGrlibContext(hDisplay);
+		Display_clear(hDisplay);
 		if (context) {
-			DrawMainMenu(context);
+			switch (selectedMenu) {
+			case MENU_MAIN:
+				DrawMainMenu(context);
+				break;
+			case MENU_SUB1:
+				DrawSubMenu1(context);
+				break;
+			}
 			GrFlush(context);
 		}
-		Event_pend(g_hEvent, DATA_CONVERSION_COMPLETE, Event_Id_NONE, BIOS_WAIT_FOREVER);
-		//Display_print0(hDisplay, 0, 0, sensorDisplayData.TMP007);
-		//Display_print0(hDisplay, 1, 0, sensorDisplayData.OPT3001);
-		//Display_print0(hDisplay, 2, 0, sensorDisplayData.BMP280);
+		Event_pend(g_hEvent, Event_Id_NONE, DATA_CONVERSION_COMPLETE + BUTTON_PRESSED, BIOS_WAIT_FOREVER);
 	}
 }
 

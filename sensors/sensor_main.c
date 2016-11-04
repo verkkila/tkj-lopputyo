@@ -74,7 +74,7 @@ static void AccumulateSun()
 	int i, max_index;
 
 	max_index = tmp007_index < opt3001_index ? tmp007_index : opt3001_index;
-	for (i = 0; i < max; ++i) {
+	for (i = 0; i < max_index; ++i) {
 		if (TMP007_data[i] > TEMPERATURE_THRESHOLD && OPT3001_data[i] > LUMINOSITY_THRESHOLD) {
 			a += TMP007_READ_RATE_MS / 1000.f;
 			System_printf("Auringonottoa...\n", i);

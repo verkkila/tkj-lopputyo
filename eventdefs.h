@@ -14,5 +14,6 @@
 #define BMP280_READ_COMPLETE Event_Id_03
 #define DATA_CONVERSION_COMPLETE Event_Id_04
 #define START_CONVERSIONS Event_Id_05
+#define BUTTON_PRESSED Event_Id_06
 
 #endif /* EVENTDEFS_H_ */

@@ -27,32 +27,34 @@
 #include "wireless/comm_main.h"
 #include "display/menu.h"
 
-typedef struct {
-	char name[17];
-	char image[8];
-	uint32_t l;
-	uint32_t a;
-	uint32_t r;
-	uint32_t s;
-} aasigotchi_data;
+#include "aasigotchi.h"
+
+
+aasigotchi_data testiGotchi = {
+	.name = "Testigotchi",
+	.image = {
+			0b00100100,
+			0b00100100,
+			0b01111110,
+			0b10000001,
+			0b10111101,
+			0b10000001,
+			0b10000001,
+			0b01111110
+	},
+	.l = 10,
+	.a = 20,
+	.r = 30,
+	.s = 40,
+};
+
+aasigotchi_data *currentGotchi = NULL;
 
 /*Globals*/
 Event_Handle g_hEvent = NULL;
 
 /* Display */
 Display_Handle hDisplay;
-
-/* Pin Button1 configured as power button */
-static PIN_Handle hPowerButton;
-static PIN_State sPowerButton;
-PIN_Config cPowerButton[] = {
-    Board_BUTTON1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
-    PIN_TERMINATE
-};
-PIN_Config cPowerWake[] = {
-    Board_BUTTON1 | PIN_INPUT_EN | PIN_PULLUP | PINCC26XX_WAKEUP_NEGEDGE,
-    PIN_TERMINATE
-};
 
 /* Pin Button0 configured */
 static PIN_Handle hButton0;
@@ -62,8 +64,20 @@ PIN_Config cButton0[] = {
     PIN_TERMINATE
 };
 
+/* Pin Button1 configured as power button */
+static PIN_Handle hButton1;
+static PIN_State sButton1;
+PIN_Config cButton1[] = {
+    Board_BUTTON1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
+    PIN_TERMINATE
+};
+PIN_Config cPowerWake[] = {
+    Board_BUTTON1 | PIN_INPUT_EN | PIN_PULLUP | PINCC26XX_WAKEUP_NEGEDGE,
+    PIN_TERMINATE
+};
+
 /* Leds */
-static PIN_Handle hLed;
+PIN_Handle hLed;
 static PIN_State sLed;
 PIN_Config cLed[] = {
     Board_LED0 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
@@ -78,7 +92,7 @@ Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
     Display_close(hDisplay);
     Task_sleep(100000 / Clock_tickPeriod);
 
-	PIN_close(hPowerButton);
+	PIN_close(hButton1);
 
     PINCC26XX_setWakeup(cPowerWake);
 	Power_shutdown(NULL,0);
@@ -95,20 +109,20 @@ Int main(void)
     Board_initGeneral();
 
 	/* Buttons */
-	hPowerButton = PIN_open(&sPowerButton, cPowerButton);
-	if(!hPowerButton) {
-		System_abort("Error initializing button shut pins\n");
-	}
-	if (PIN_registerIntCb(hPowerButton, &powerButtonFxn) != 0) {
-		System_abort("Error registering button callback function");
-	}
-
 	hButton0 = PIN_open(&sButton0, cButton0);
 	if (!hButton0) {
 		System_abort("Error initializing button0.\n");
 	}
-	if (PIN_registerIntCb(hButton0, &ledButtonFxn) != 0) {
+	if (PIN_registerIntCb(hButton0, &Menu_OnButton0) != 0) {
 		System_abort("Error registering button0 callback.\n");
+	}
+
+	hButton1 = PIN_open(&sButton1, cButton1);
+	if(!hButton1) {
+		System_abort("Error initializing button1.\n");
+	}
+	if (PIN_registerIntCb(hButton1, &Menu_OnButton1) != 0) {
+		System_abort("Error registering button1 callback.");
 	}
 
     /* Leds */
@@ -122,11 +136,13 @@ Int main(void)
     	System_abort("Event create failed.\n");
     }
 
-    /* Task */
-    Sensors_Start();
-    //Menu_Start();
     Init6LoWPAN();
-    Comm_Start();
+    /* Task */
+    //Sensors_Start();
+    Menu_Start();
+    //Comm_Start();
+
+    currentGotchi = &testiGotchi;
 
     System_printf("Ready!\n");
     System_flush();
