@@ -69,28 +69,31 @@ Void Master_Clock_Tick(UArg arg)
 	*/
 }
 
+static void AccumulateSun()
+{
+	int i, max_index;
+
+	max_index = tmp007_index < opt3001_index ? tmp007_index : opt3001_index;
+	for (i = 0; i < max; ++i) {
+		if (TMP007_data[i] > TEMPERATURE_THRESHOLD && OPT3001_data[i] > LUMINOSITY_THRESHOLD) {
+			a += TMP007_READ_RATE_MS / 1000.f;
+			System_printf("Auringonottoa...\n", i);
+			System_flush();
+		}
+	}
+}
+
 static void AccumulateFreshAir()
 {
 	int i;
 
 	for (i = 0; i < bmp280_index; ++i) {
 		if (BMP280_presData[i] < 109114.f) {
-			int x = 0, x0 = 0, y = 0, y0 = 0;
-			float k;
-			x = i - 1;
-			y = data[i - 1];
-			x0 = i;
-			y0 = data[i];
-			k = (y - y0) / (x - x0);
-			System_printf("Ilmanpaine oli rajan alla, index: %i\n", i);
+			r += BMP280_READ_RATE_MS / 1000.f;
+			System_printf("Raikasta ilmaa...\n", i);
 			System_flush();
 		}
 	}
-}
-
-static void AccumulateSun()
-{
-
 }
 
 static void AccumulatePhysicalActivity()
@@ -166,6 +169,7 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		BMP280_ConvertData();
 
 		AccumulateFreshAir();
+		AccumulateSun();
 
 		tmp007_index = 0;
 		bmp280_index = 0;
