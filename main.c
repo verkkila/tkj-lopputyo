@@ -31,7 +31,7 @@
 
 
 aasigotchi_data testiGotchi = {
-	.name = "Testigotchi",
+	.name = "testi",
 	.image = {
 			0b00100100,
 			0b00100100,
@@ -138,7 +138,7 @@ Int main(void)
 
     Init6LoWPAN();
     /* Task */
-    //Sensors_Start();
+    Sensors_Start();
     Menu_Start();
     //Comm_Start();
 

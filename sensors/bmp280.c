@@ -188,13 +188,13 @@ void BMP280_ConvertData()
 {
 	int i;
 
-	System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_index, BMP280_NUM_VALUES);
+	//System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_index, BMP280_NUM_VALUES);
 	for (i = 0; i <= bmp280_index; ++i) {
 		BMP280_ConvertTemperature(rawData_Temp[i]);
 		BMP280_presData[i] = BMP280_ConvertPressure(rawData_Pres[i]);
 	}
 	//bmp280_index = 0;
-	System_printf("BMP280 conversion complete.\n");
+	//System_printf("BMP280 conversion complete.\n");
 }
 
 /*

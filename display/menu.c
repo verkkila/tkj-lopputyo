@@ -160,7 +160,7 @@ Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 	Event_post(g_hEvent, BUTTON_PRESSED);
 }
 
-static void Menu_UpdateState(void)
+static void Menu_NextState(void)
 {
 	switch (selectedMenu) {
 	case MENU_MAIN:
@@ -206,10 +206,10 @@ static void Menu_UpdateState(void)
 
 Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
 {
-	System_printf("Button1 pressed value: %i.\n", PIN_getOutputValue(Board_BUTTON1));
+	System_printf("Button1 pressed value: %i.\n", PIN_getInputValue(Board_BUTTON1));
 	System_flush();
 	//PIN_setOutputValue(hLed, Board_LED1, !PIN_getOutputValue(Board_LED1));
-	Menu_UpdateState();
+	Menu_NextState();
 	Event_post(g_hEvent, BUTTON_PRESSED);
 }
 
@@ -276,7 +276,7 @@ Void DrawScreen(UArg arg0, UArg arg1)
 			}
 			GrFlush(context);
 		}
-		Event_pend(g_hEvent, Event_Id_NONE, DATA_CONVERSION_COMPLETE + BUTTON_PRESSED, BIOS_WAIT_FOREVER);
+		Event_pend(g_hEvent, Event_Id_NONE, BUTTON_PRESSED, BIOS_WAIT_FOREVER);
 	}
 }
 

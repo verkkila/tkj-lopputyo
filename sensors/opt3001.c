@@ -104,12 +104,12 @@ void OPT3001_ConvertData()
 {
 	int i;
 
-	System_printf("OPT3001: Starting conversion, index: (%i/%i)\n", opt3001_index, OPT3001_NUM_VALUES);
+	//System_printf("OPT3001: Starting conversion, index: (%i/%i)\n", opt3001_index, OPT3001_NUM_VALUES);
 	for (i = 0; i <= opt3001_index; ++i) {
 		OPT3001_data[i] = OPT3001_ConvertLuminosity(rawData[i]);
 	}
 	//opt3001_index = 0;
-	System_printf("OPT3001 conversion complete.\n");
+ 	//System_printf("OPT3001 conversion complete.\n");
 }
 
 /*

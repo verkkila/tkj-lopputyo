@@ -16,6 +16,7 @@ Clock_Handle	Master_Clock;
 Clock_Handle	TMP007_Clock;
 Clock_Handle	BMP280_Clock;
 Clock_Handle	OPT3001_Clock;
+Semaphore_Handle	sem;
 
 int tmp007_index = 0;
 int bmp280_index = 0;
@@ -64,7 +65,8 @@ Void OPT3001_Tick(UArg arg)
 
 Void Master_Clock_Tick(UArg arg)
 {
-	Event_post(g_hEvent, START_CONVERSIONS);
+	//Event_post(g_hEvent, START_CONVERSIONS);
+	Semaphore_post(sem);
 	/*
 	*/
 }
@@ -109,6 +111,7 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 	Clock_Params	TMP007_Params;
 	Clock_Params	BMP280_Params;
 	Clock_Params	OPT3001_Params;
+	Semaphore_Params	semParams;
 
 	Clock_Params_init(&TMP007_Params);
 	TMP007_Params.period = TMP007_READ_RATE_MS * 1000 / Clock_tickPeriod;
@@ -131,6 +134,12 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		OPT3001_Clock == NULL ||
 		Master_Clock == NULL) {
 		System_abort("Failed to create sensor clocks.");
+	}
+
+	Semaphore_Params_init(&semParams);
+	sem = Semaphore_create(0, &semParams, NULL);
+	if (!sem) {
+		System_abort("Failed to create semaphore");
 	}
 	/* Create I2C for usage */
 	I2C_Params_init(&i2cParams);
@@ -157,7 +166,8 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     Clock_start(Master_Clock);
 
     while (1) {
-    	Event_pend(g_hEvent, START_CONVERSIONS, Event_Id_NONE, BIOS_WAIT_FOREVER);
+    	//Event_pend(g_hEvent, START_CONVERSIONS, Event_Id_NONE, BIOS_WAIT_FOREVER);
+    	Semaphore_pend(sem, BIOS_WAIT_FOREVER);
 		System_printf("Converting values.\n");
 
 		Clock_stop(TMP007_Clock);
@@ -179,7 +189,7 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		Clock_start(OPT3001_Clock);
 		Clock_start(BMP280_Clock);
 
-		Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
+		//Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
 		System_flush();
 		//Task_sleep(1000000 / Clock_tickPeriod);
     }
