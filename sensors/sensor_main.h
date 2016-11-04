@@ -21,6 +21,7 @@
 
 #include "../Board.h"
 #include "../eventdefs.h"
+#include "../aasigotchi.h"
 #include "sensordefs.h"
 #include "bmp280.h"
 #include "hdc1000.h"
@@ -29,6 +30,8 @@
 #include "tmp007.h"
 
 extern Event_Handle g_hEvent;
+
+extern aasigotchi_data *currentGotchi;
 
 Void Sensors_Start();
 

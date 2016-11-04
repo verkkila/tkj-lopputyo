@@ -29,7 +29,6 @@
 
 #include "aasigotchi.h"
 
-
 aasigotchi_data testiGotchi = {
 	.name = "Testigotchi",
 	.image = {
@@ -138,7 +137,7 @@ Int main(void)
 
     Init6LoWPAN();
     /* Task */
-    //Sensors_Start();
+    Sensors_Start();
     Menu_Start();
     //Comm_Start();
 
