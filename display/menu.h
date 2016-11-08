@@ -19,34 +19,25 @@
 #include <ti/drivers/PIN.h>
 #include <ti/drivers/pin/PINCC26XX.h>
 
+#include "menu_impl.h"
 #include "../sensors/sensor_main.h"
 #include "../aasigotchi.h"
 
-enum MainMenuOptions {
-	MM_OPT_CREATENEW = 0,
-	MM_OPT_LOAD,
-	MM_OPT_ACTIVITIES,
-	MM_OPT_HELP
-};
-
-enum SubMenu1Options {
-	SM1_OPT_RETURN = 0,
-	SM1_OPT_SUN,
-	SM1_OPT_FRESHAIR,
-	SM1_OPT_PHYS,
-	SM1_OPT_HELLO
-};
-
-enum MenuId {
-	MENU_MAIN,
-	MENU_SUB1
-};
-
-extern PIN_Handle hLed;
 extern aasigotchi_data *currentGotchi;
+
+Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId);
 
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id);
 Void Menu_OnButton1(PIN_Handle handle, PIN_Id id);
+
+Void DrawMainMenu(tContext *pContext);
+Void DrawActivitiesMenu(tContext *pContext);
+Void DrawSunMenu(tContext *pContext);
+
+void dummyFxn1(void);
+void dummyFxn2(void);
+void dummyFxn3(void);
+void dummyFxn4(void);
 
 Void Menu_Start();
 

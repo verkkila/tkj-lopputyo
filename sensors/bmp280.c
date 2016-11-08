@@ -171,7 +171,6 @@ void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer)
 		if (transfer) {
 			System_printf("BMP280: Trimming write ok!\n");
 			BMP280_SetTrimming(msg->readBuf);
-			Event_post(g_hEvent, SENSOR_SETUP_COMPLETE);
 		} else
 			System_abort("BMP280: Trimming write failed!\n");
 		break;
@@ -189,7 +188,7 @@ void BMP280_ConvertData()
 	int i;
 
 	//System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_index, BMP280_NUM_VALUES);
-	for (i = 0; i <= bmp280_index; ++i) {
+	for (i = 0; i < bmp280_index; ++i) {
 		BMP280_ConvertTemperature(rawData_Temp[i]);
 		BMP280_presData[i] = BMP280_ConvertPressure(rawData_Pres[i]);
 	}

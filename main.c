@@ -55,7 +55,6 @@ Event_Handle g_hEvent = NULL;
 /* Display */
 Display_Handle hDisplay;
 
-/* Pin Button0 configured */
 static PIN_Handle hButton0;
 static PIN_State sButton0;
 PIN_Config cButton0[] = {
@@ -63,13 +62,13 @@ PIN_Config cButton0[] = {
     PIN_TERMINATE
 };
 
-/* Pin Button1 configured as power button */
 static PIN_Handle hButton1;
 static PIN_State sButton1;
 PIN_Config cButton1[] = {
     Board_BUTTON1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_NEGEDGE,
     PIN_TERMINATE
 };
+
 PIN_Config cPowerWake[] = {
     Board_BUTTON1 | PIN_INPUT_EN | PIN_PULLUP | PINCC26XX_WAKEUP_NEGEDGE,
     PIN_TERMINATE
@@ -89,17 +88,12 @@ Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
 {
     Display_clear(hDisplay);
     Display_close(hDisplay);
-    Task_sleep(100000 / Clock_tickPeriod);
+    //Task_sleep(100000 / Clock_tickPeriod);
 
 	PIN_close(hButton1);
 
     PINCC26XX_setWakeup(cPowerWake);
-	Power_shutdown(NULL,0);
-}
-
-Void ledButtonFxn(PIN_Handle handle, PIN_Id pinId)
-{
-	//PIN_setOutputValue(hLed, Board_LED0, !PIN_getOutputValue(Board_LED0));
+	Power_shutdown(NULL, 0);
 }
 
 Int main(void)

@@ -90,7 +90,7 @@ void TMP007_ConvertData()
 	int i;
 
 	//System_printf("TMP007: Starting conversion, index: (%i/%i)\n", tmp007_index, TMP007_NUM_VALUES);
-	for (i = 0; i <= tmp007_index; ++i) {
+	for (i = 0; i < tmp007_index; ++i) {
 		TMP007_data[i] = TMP007_ConvertTemperature(rawData[i]);
 	}
 	//tmp007_index = 0;

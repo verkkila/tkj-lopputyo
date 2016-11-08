@@ -22,6 +22,10 @@ int tmp007_index = 0;
 int bmp280_index = 0;
 int opt3001_index = 0;
 
+int isTrackingSun = 0;
+int isTrackingFreshAir = 0;
+int isTrackingPhysical = 0;
+
 Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
 	switch (msg->slaveAddress) {
@@ -69,7 +73,7 @@ Void Master_Clock_Tick(UArg arg)
 	*/
 }
 
-static void AccumulateSun()
+static void AccumulateSun(void)
 {
 	int i, max_index;
 	float temp_a;
@@ -77,26 +81,77 @@ static void AccumulateSun()
 	max_index = tmp007_index < opt3001_index ? tmp007_index : opt3001_index;
 	for (i = 0; i < max_index; ++i) {
 		if (TMP007_data[i] > TEMPERATURE_THRESHOLD && OPT3001_data[i] > LUMINOSITY_THRESHOLD) {
-			temp_a += TMP007_READ_RATE_MS / 1000.f;
+			temp_a += TMP007_READ_RATE_MS;
 		}
 	}
+	temp_a *= 0.001f;
 	currentGotchi->a += floor(temp_a);
 }
 
-static void AccumulateFreshAir()
+void Sensors_StartTrackingSun(void)
+{
+	Clock_start(TMP007_Clock);
+	Clock_start(OPT3001_Clock);
+	Clock_start(Master_Clock);
+	isTrackingSun = 1;
+	System_printf("Started tracking sun.\n");
+	System_flush();
+}
+
+void Sensors_StopTrackingSun(void)
+{
+	isTrackingSun = 0;
+	TMP007_ConvertData();
+	OPT3001_ConvertData();
+	AccumulateSun();
+	Clock_stop(TMP007_Clock);
+	Clock_stop(OPT3001_Clock);
+	Clock_stop(Master_Clock);
+	System_printf("Stopped tracking sun.\n");
+	System_flush();
+}
+
+static void AccumulateFreshAir(void)
 {
 	int i;
 	float temp_r;
 
 	for (i = 0; i < bmp280_index; ++i) {
 		if (BMP280_presData[i] < PRESSURE_THRESHOLD) {
-			temp_r += BMP280_READ_RATE_MS / 1000.f;
+			temp_r += BMP280_READ_RATE_MS;
 		}
 	}
+	temp_r *= 0.001f;
 	currentGotchi->r += floor(temp_r);
 }
 
-static void AccumulatePhysicalActivity()
+void Sensors_StartTrackingFreshAir(void)
+{
+	Clock_start(BMP280_Clock);
+	Clock_start(Master_Clock);
+	isTrackingFreshAir = 1;
+}
+
+void Sensors_StopTrackingFreshAir(void)
+{
+	isTrackingFreshAir = 0;
+	BMP280_ConvertData();
+	AccumulateFreshAir();
+	Clock_stop(BMP280_Clock);
+	Clock_stop(Master_Clock);
+}
+
+void Sensors_StartTrackingPhysical(void)
+{
+
+}
+
+void Sensors_StopTrackingPhysical(void)
+{
+
+}
+
+static void AccumulatePhysicalActivity(void)
 {
 
 }
@@ -156,44 +211,40 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     OPT3001_Setup(&i2c);
     BMP280_Setup(&i2c);
 
-    Event_pend(g_hEvent, SENSOR_SETUP_COMPLETE, Event_Id_NONE, BIOS_WAIT_FOREVER);
-
-    Clock_start(TMP007_Clock);
-    Clock_start(BMP280_Clock);
-    Clock_start(OPT3001_Clock);
-    Clock_start(Master_Clock);
+    //Event_pend(g_hEvent, SENSOR_SETUP_COMPLETE, Event_Id_NONE, BIOS_WAIT_FOREVER);
 
     while (1) {
-    	//Event_pend(g_hEvent, START_CONVERSIONS, Event_Id_NONE, BIOS_WAIT_FOREVER);
     	Semaphore_pend(sem, BIOS_WAIT_FOREVER);
 		System_printf("Converting values.\n");
+		if (isTrackingSun) {
+			Clock_stop(TMP007_Clock);
+			Clock_stop(OPT3001_Clock);
 
-		Clock_stop(TMP007_Clock);
-		Clock_stop(OPT3001_Clock);
-		Clock_stop(BMP280_Clock);
+			TMP007_ConvertData();
+			OPT3001_ConvertData();
 
-		TMP007_ConvertData();
-		OPT3001_ConvertData();
-		BMP280_ConvertData();
+			AccumulateSun();
 
-		AccumulateFreshAir();
-		AccumulateSun();
+			tmp007_index = 0;
+			opt3001_index = 0;
 
-		tmp007_index = 0;
-		bmp280_index = 0;
-		opt3001_index = 0;
+			Clock_start(TMP007_Clock);
+			Clock_start(OPT3001_Clock);
+		} else if (isTrackingFreshAir) {
+			Clock_stop(BMP280_Clock);
+			BMP280_ConvertData();
+			AccumulateFreshAir();
+			bmp280_index = 0;
+			Clock_start(BMP280_Clock);
+		} else if (isTrackingPhysical) {
 
-		Clock_start(TMP007_Clock);
-		Clock_start(OPT3001_Clock);
-		Clock_start(BMP280_Clock);
-
-		//Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
+		}
+		Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
 		System_flush();
-		//Task_sleep(1000000 / Clock_tickPeriod);
     }
 }
 
-Void Sensors_CreateTask()
+Void Sensors_CreateTask(void)
 {
 	Task_Handle task;
 	Task_Params params;
@@ -209,7 +260,7 @@ Void Sensors_CreateTask()
 	}
 }
 
-Void Sensors_Start()
+Void Sensors_Start(void)
 {
 	Sensors_CreateTask();
 }

@@ -12,6 +12,7 @@ Char displayStack[DISPLAY_STACKSIZE];
 
 Display_Handle hDisplay;
 //aasigotchi_data *currentGotchi = NULL;
+Menu *currentMenu = NULL;
 
 tRectangle testRect = {
 		.sXMin = 50,
@@ -43,25 +44,25 @@ const uint8_t imgdata_Sun[8] = {
 };
 
 const uint8_t imgdata_PhysicalActivity[8] = {
-		0b11111111,
-		0b10000001,
-		0b10111101,
-		0b10100101,
-		0b10111101,
-		0b10100001,
-		0b10000001,
-		0b11111111
+		0b00000000,
+		0b11111000,
+		0b00000000,
+		0b00111110,
+		0b00000000,
+		0b00111110,
+		0b00000000,
+		0b11111000
 };
 
 const uint8_t imgdata_FreshAir[8] = {
-		0b11111111,
-		0b10000001,
-		0b10111101,
-		0b10100101,
-		0b10111101,
-		0b10100101,
-		0b10000001,
-		0b11111111
+		0b00000000,
+		0b01001001,
+		0b01001001,
+		0b10010010,
+		0b10010010,
+		0b01001001,
+		0b01001001,
+		0b00000000
 };
 
 
@@ -106,7 +107,7 @@ const tImage img_FreshAir = {
     .pPixel = imgdata_FreshAir
 };
 
-tImage Menu_GetImageFromBitmap(tImage *img, const uint8_t *bitmap)
+void Menu_GetImageFromBitmap(tImage *img, const uint8_t *bitmap)
 {
 	img->BPP = IMAGE_FMT_1BPP_UNCOMP;
 	img->NumColors = 2;
@@ -116,96 +117,30 @@ tImage Menu_GetImageFromBitmap(tImage *img, const uint8_t *bitmap)
 	img->pPixel = bitmap;
 }
 
-#define MAINMENU_OPTIONS 4
-static char mainMenu[MAINMENU_OPTIONS][12] = {
-		                   ">Luo uusi",
-						   " Hae/vie",
-                           " Harrasta",
-						   " Help"};
-
-#define SUBMENU1_OPTIONS 5
-static char subMenu1[SUBMENU1_OPTIONS][12] = {
-		                   ">Paluu",
-					       " Aurinko",
-						   " Ilma",
-                           " Liikunta",
-						   " Kaverit"
-};
-
-unsigned int selectedItem = 0;
-unsigned int selectedMenu = MENU_SUB1;
-
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 {
-	switch (selectedMenu) {
-	case MENU_MAIN:
-		mainMenu[selectedItem][0] = ' ';
-		++selectedItem;
-		if (selectedItem >= MAINMENU_OPTIONS)
-			selectedItem = MM_OPT_CREATENEW;
-		mainMenu[selectedItem][0] = '>';
-		break;
-	case MENU_SUB1:
-		subMenu1[selectedItem][0] = ' ';
-		++selectedItem;
-		if (selectedItem >= SUBMENU1_OPTIONS)
-			selectedItem = SM1_OPT_RETURN;
-		subMenu1[selectedItem][0] = '>';
-		break;
+	unsigned char selectedOption = currentMenu->selectedOption;
+	if (!isLastOption(currentMenu->options[selectedOption + 1])) {
+		currentMenu->selectedOption++;
+	} else {
+		currentMenu->selectedOption = 0;
 	}
-
 	Event_post(g_hEvent, BUTTON_PRESSED);
 }
 
 static void Menu_NextState(void)
 {
-	switch (selectedMenu) {
-	case MENU_MAIN:
-		switch (selectedItem) {
-		case MM_OPT_CREATENEW:
-			break;
-		case MM_OPT_LOAD:
-			break;
-		case MM_OPT_ACTIVITIES:
-			selectedMenu = MENU_SUB1;
-			selectedItem = 0;
-			break;
-		case MM_OPT_HELP:
-			break;
-		default:
-			break;
-		}
-		break;
-	case MENU_SUB1:
-		switch (selectedItem) {
-		case SM1_OPT_RETURN:
-			System_printf("Paluu.\n");
-			selectedMenu = MENU_MAIN;
-			selectedItem = 0;
-			break;
-		case SM1_OPT_SUN:
-			System_printf("Auringonottoa.\n");
-			break;
-		case SM1_OPT_FRESHAIR:
-			System_printf("Raikasta ilmaa.\n");
-			break;
-		case SM1_OPT_PHYS:
-			System_printf("Liikuntaa.\n");
-			break;
-		case SM1_OPT_HELLO:
-			System_printf("Morjenstamista.\n");
-			break;
-		}
-		break;
+	unsigned char selectedOption = currentMenu->selectedOption;
+	if (currentMenu->options[selectedOption].action != NULL) {
+		currentMenu->options[selectedOption].action();
 	}
-	System_flush();
+	if (currentMenu->options[selectedOption].next != NULL) {
+		currentMenu = currentMenu->options[selectedOption].next;
+	}
 }
 
 Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
 {
-	System_printf("Button1 pressed value: %i.\n", PIN_getInputValue(Board_BUTTON1));
-	System_flush();
-	//PIN_setOutputValue(hLed, Board_LED1, !PIN_getOutputValue(Board_LED1));
 	Menu_NextState();
 	Event_post(g_hEvent, BUTTON_PRESSED);
 }
@@ -213,11 +148,17 @@ Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
 Void DrawMainMenu(tContext *pContext)
 {
 	int i;
+	unsigned char selectedOptionY = (currentMenu->selectedOption + 3) * 8 + 4;
 	Display_print0(hDisplay, 0, 6, "Menu");
 
-	for (i = 0; i < MAINMENU_OPTIONS; ++i) {
-		Display_print0(hDisplay, i+3, 2, mainMenu[i]);
+	for (i = 0; i < currentMenu->numOptions; ++i) {
+		int x = 4;
+		if (currentMenu->selectedOption == i)
+			x++;
+		Display_print0(hDisplay, i+3, x, currentMenu->options[i].text);
 	}
+	//GrLineDraw(pContext, 20, selectedOptionY, 26, selectedOptionY);
+
 	GrLineDraw(pContext, 0, 58, 96, 58);
 	Display_print0(hDisplay, 8, 0, currentGotchi->name);
 	tImage test;
@@ -225,25 +166,79 @@ Void DrawMainMenu(tContext *pContext)
 	GrImageDraw(pContext, &test, 0, 9*8);
 }
 
-Void DrawSubMenu1(tContext *pContext)
+Void DrawActivitiesMenu(tContext *pContext)
 {
 	int i;
+	unsigned char selectedOptionY = (currentMenu->selectedOption + 2) * 8 + 4;
 	Display_print0(hDisplay, 0, 2, "Harrastus");
 
-	GrImageDraw(pContext, &img_Sun, 8, 48);
-	Display_print1(hDisplay, 7, 1, "%i", currentGotchi->a);
+	Display_print1(hDisplay, 8, 3, "%i", currentGotchi->a);
+	GrImageDraw(pContext, &img_Sun, 8, 8*8);
 
-	GrImageDraw(pContext, &img_Physical, 8, 64);
-	Display_print1(hDisplay, 9, 1, "%i", currentGotchi->l);
+	Display_print1(hDisplay, 9, 3, "%i", currentGotchi->r);
+	GrImageDraw(pContext, &img_FreshAir, 8, 9*8);
 
-	GrImageDraw(pContext, &img_FreshAir, 8, 80);
-	Display_print1(hDisplay, 11, 1, "%i", currentGotchi->r);
+	Display_print1(hDisplay, 10, 4, "%i", currentGotchi->l);
+	GrImageDraw(pContext, &img_Physical, 4, 10*8);
+	tImage test;
+	Menu_GetImageFromBitmap(&test, currentGotchi->image);
+	GrImageDraw(pContext, &test, 12, 10*8);
 
-	for (i = 0; i < SUBMENU1_OPTIONS; ++i) {
-		Display_print0(hDisplay, i+1, 2, subMenu1[i]);
+	for (i = 0; i < currentMenu->numOptions; ++i) {
+		int x = 3;
+		if (currentMenu->selectedOption == i)
+			x++;
+		Display_print0(hDisplay, i+2, x, currentMenu->options[i].text);
+	}
+	//GrLineDraw(pContext, 10, selectedOptionY, 16, selectedOptionY);
+}
+
+Void DrawSunMenu(tContext *pContext)
+{
+	int i;
+	//unsigned char selectedOptionY = (currentMenu->selectedOption + 6) * 8 + 4;
+	for (i = 0; i < currentMenu->numOptions; ++i) {
+		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
+	}
+	Display_print1(hDisplay, 6, 7, "%i", currentGotchi->a);
+	//GrLineDraw(pContext, 0, 4, 6, 4);
+	GrCircleDraw(pContext, 48, 48, 20);
+	for (i = 0; i < 8; ++i) {
+		int length = 10;
+		if (i % 2 == 0)
+			length += 5;
+		int xClose = cos(i * 0.785398) * 20;
+		int yClose = sin(i * 0.785398) * 20;
+
+		int xFar = cos(i * 0.785398) * (20 + length);
+		int yFar = sin(i * 0.785398) * (20 + length);
+		GrLineDraw(pContext, xClose+48, yClose+48, xFar+48, yFar+48);
 	}
 }
 
+void dummyFxn1(void)
+{
+	System_printf("Dummyfxn1 called.\n");
+	System_flush();
+}
+
+void dummyFxn2(void)
+{
+	System_printf("Dummyfxn2 called.\n");
+	System_flush();
+}
+
+void dummyFxn3(void)
+{
+	System_printf("Dummyfxn3 called.\n");
+	System_flush();
+}
+
+void dummyFxn4(void)
+{
+	System_printf("Dummyfxn4 called.\n");
+	System_flush();
+}
 
 
 Void DrawScreen(UArg arg0, UArg arg1)
@@ -258,22 +253,18 @@ Void DrawScreen(UArg arg0, UArg arg1)
 	}
 
 	Display_clear(hDisplay);
+	currentMenu = GetFirstMenu();
 
 	while (1) {
 		tContext *context = DisplayExt_getGrlibContext(hDisplay);
 		Display_clear(hDisplay);
 		if (context) {
-			switch (selectedMenu) {
-			case MENU_MAIN:
-				DrawMainMenu(context);
-				break;
-			case MENU_SUB1:
-				DrawSubMenu1(context);
-				break;
+			if (currentMenu != NULL) {
+				currentMenu->drawFxn(context);
 			}
 			GrFlush(context);
 		}
-		Event_pend(g_hEvent, Event_Id_NONE, BUTTON_PRESSED, BIOS_WAIT_FOREVER);
+		Event_pend(g_hEvent, Event_Id_NONE, BUTTON_PRESSED + DATA_CONVERSION_COMPLETE, BIOS_WAIT_FOREVER);
 	}
 }
 

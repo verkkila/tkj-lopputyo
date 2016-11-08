@@ -31,9 +31,16 @@
 #include "tmp007.h"
 
 extern Event_Handle g_hEvent;
-
 extern aasigotchi_data *currentGotchi;
 
-Void Sensors_Start();
+Void Sensors_Start(void);
+
+void Sensors_StartTrackingSun(void);
+void Sensors_StartTrackingFreshAir(void);
+void Sensors_StartTrackingPhysical(void);
+
+void Sensors_StopTrackingSun(void);
+void Sensors_StopTrackingFreshAir(void);
+void Sensors_StopTrackingPhysical(void);
 
 #endif /* SENSORS_SENSOR_MAIN_H_ */
