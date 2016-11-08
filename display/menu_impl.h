@@ -8,6 +8,8 @@
 #ifndef DISPLAY_MENU_IMPL_H_
 #define DISPLAY_MENU_IMPL_H_
 
+#include <string.h>
+
 #include <ti/mw/display/Display.h>
 #include <ti/mw/display/DisplayExt.h>
 
@@ -24,6 +26,7 @@ enum MenuId {
 	MENU_ACT_SUN,
 	MENU_ACT_AIR,
 	MENU_ACT_PHYS,
+	MENU_ACT_SOCIAL,
 	MENU_HELP
 };
 

@@ -93,7 +93,7 @@ Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
 	PIN_close(hButton1);
 
     PINCC26XX_setWakeup(cPowerWake);
-	Power_shutdown(NULL, 0);
+	Power_shutdown(NULL, 5000);
 }
 
 Int main(void)

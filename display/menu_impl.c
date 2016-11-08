@@ -21,17 +21,50 @@ Menu sunMenu = {
 	}
 };
 
+Menu airMenu = {
+	.id = MENU_ACT_AIR,
+	.numOptions = 1,
+	.selectedOption = 0,
+	.drawFxn = DrawAirMenu,
+	.options = {
+			{&activitiesMenu, Sensors_StopTrackingFreshAir, "Takaisin"},
+			{NULL, NULL, ""}
+	}
+};
+
+Menu physMenu = {
+	.id = MENU_ACT_PHYS,
+	.numOptions = 1,
+	.selectedOption = 0,
+	.drawFxn = DrawPhysMenu,
+	.options = {
+			{&activitiesMenu, Sensors_StopTrackingPhysical, "Takaisin"},
+			{NULL, NULL, ""}
+	}
+};
+
+Menu socialMenu = {
+	.id = MENU_ACT_SOCIAL,
+	.numOptions = 1,
+	.selectedOption = 0,
+	.drawFxn = DrawSocialMenu,
+	.options = {
+			{&activitiesMenu, NULL, "Takaisin"},
+			{NULL, NULL, ""}
+	}
+};
+
 Menu activitiesMenu = {
 	.id = MENU_ACTIVITIES,
 	.numOptions = 5,
 	.selectedOption = 0,
 	.drawFxn = DrawActivitiesMenu,
 	.options = {
-			{&mainMenu, dummyFxn4, "Takaisin"},
+			{&mainMenu, Menu_StopRedrawing, "Takaisin"},
 			{&sunMenu, Sensors_StartTrackingSun, "Aurinko"},
-			{NULL, dummyFxn4, "Raikas ilma"},
-			{NULL, dummyFxn4, "Liikunta"},
-			{NULL, dummyFxn1, "Kaverit"},
+			{&airMenu, Sensors_StartTrackingFreshAir, "Raikas ilma"},
+			{&physMenu, Sensors_StartTrackingPhysical, "Liikunta"},
+			{&socialMenu, NULL, "Kaverit"},
 			{NULL, NULL, ""}
 	}
 };
@@ -42,10 +75,10 @@ Menu mainMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawMainMenu,
 	.options = {
-			{NULL, dummyFxn1, "Luo uusi"},
-			{NULL, dummyFxn2, "Hae/vie"},
-			{&activitiesMenu, dummyFxn3, "Harrasta"},
-			{NULL, powerButtonFxn, "Sammuta"},
+			{NULL, NULL, "Luo uusi"},
+			{NULL, NULL, "Hae/vie"},
+			{&activitiesMenu, Menu_StartRedrawing, "Harrasta"},
+			{NULL, NULL, "Sammuta"},
 			{NULL, NULL, ""}
 	}
 };
@@ -57,5 +90,5 @@ const Menu *GetFirstMenu()
 
 int isLastOption(const MenuOption opt)
 {
-	return opt.action == NULL && opt.next == NULL;
+	return opt.action == NULL && opt.next == NULL && !strlen(opt.text);
 }

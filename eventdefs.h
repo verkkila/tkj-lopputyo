@@ -15,5 +15,6 @@
 #define DATA_CONVERSION_COMPLETE Event_Id_04
 #define START_CONVERSIONS Event_Id_05
 #define BUTTON_PRESSED Event_Id_06
+#define UPDATE_SCREEN Event_Id_07
 
 #endif /* EVENTDEFS_H_ */
