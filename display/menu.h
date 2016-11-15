@@ -23,6 +23,7 @@
 #include "menu_impl.h"
 #include "../sensors/sensor_main.h"
 #include "../aasigotchi.h"
+#include "../util/vec2f.h"
 
 extern aasigotchi_data *currentGotchi;
 

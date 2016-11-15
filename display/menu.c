@@ -175,7 +175,6 @@ Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
 Void DrawMainMenu(tContext *pContext)
 {
 	int i;
-	unsigned char selectedOptionY = (currentMenu->selectedOption + 3) * 8 + 4;
 	Display_print0(hDisplay, 0, 6, "Menu");
 
 	for (i = 0; i < currentMenu->numOptions; ++i) {
@@ -195,7 +194,6 @@ Void DrawMainMenu(tContext *pContext)
 Void DrawActivitiesMenu(tContext *pContext)
 {
 	int i;
-	unsigned char selectedOptionY = (currentMenu->selectedOption + 2) * 8 + 4;
 	Display_print0(hDisplay, 0, 2, "Harrastus");
 
 	Display_print1(hDisplay, 8, 3, "%i", currentGotchi->a);
@@ -250,22 +248,32 @@ Void DrawAirMenu(tContext *pContext)
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
-	Display_print1(hDisplay, 5, 3, "%i", currentGotchi->r);
+	Display_print1(hDisplay, 1, 7, "%i", currentGotchi->r);
 
-	GrCircleDraw(pContext, 24, 48, 10);
+	GrCircleDraw(pContext, 24, 48, 5);
 	for (i = 0; i < 3; ++i) {
-		int xClose = cos((i * 2.0943) + offset) * 10;
-		int yClose = sin((i * 2.0943) + offset) * 10;
-
-		int xFar = cos((i * 2.0943) + offset) * 30;
-		int yFar = sin((i * 2.0943) + offset) * 30;
-
-
-		GrLineDraw(pContext, xClose+24, yClose+48, xFar+24, yFar+48);
+		vec2f wing, wingSideLeft, wingSideRight;
+		wing.x = cos((i * 2.0943) + offset);
+		wing.y = sin((i * 2.0943) + offset);
+		wingSideLeft.x = wing.y * 3;
+		wingSideLeft.y = wing.x * -3;
+		wingSideRight = vec2f_Mult(&wingSideLeft, -1.0f);
+		vec2f vClose = vec2f_Mult(&wing, 5);
+		vec2f vFar = vec2f_Mult(&wing, 30);
+		vec2f halfWing = vec2f_Mult(&wing, 10);
+		wingSideLeft.x += halfWing.x;
+		wingSideLeft.y += halfWing.y;
+		wingSideRight.x += halfWing.x;
+		wingSideRight.y += halfWing.y;
+		GrLineDraw(pContext, vClose.x+24, vClose.y+48, wingSideLeft.x+24, wingSideLeft.y+48);
+		GrLineDraw(pContext, vClose.x+24, vClose.y+48, wingSideRight.x+24, wingSideRight.y+48);
+		GrLineDraw(pContext, wingSideLeft.x+24, wingSideLeft.y+48, vFar.x+24, vFar.y+48);
+		GrLineDraw(pContext, wingSideRight.x+24, wingSideRight.y+48, vFar.x+24, vFar.y+48);
 	}
 	offset += 0.20943;
 	if (offset >= 2.0943)
 		offset = 0;
+	/*
 	static int lineOffs = 0;
 	for (i = 0; i < 2; ++i) {
 		int xLeft = 24 + (i * 5) + lineOffs;
@@ -277,11 +285,13 @@ Void DrawAirMenu(tContext *pContext)
 	++lineOffs;
 	if (lineOffs > 50)
 		lineOffs = 0;
+	*/
 }
 
 Void DrawPhysMenu(tContext *pContext)
 {
 	int i;
+	static int xOffs = 15;
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
@@ -289,8 +299,11 @@ Void DrawPhysMenu(tContext *pContext)
 
 	static int offset = 0;
 	GrLineDraw(pContext, 0, 75, 96, 75);
-	GrCircleDraw(pContext, 48, 50-sin(-0.7854+(offset*0.20943))*10, 15);
+	GrCircleDraw(pContext, xOffs, 50-sin(-0.7854+(offset*0.20943))*10, 15);
 	offset += 3;
+	xOffs += 4;
+	if (xOffs > 80)
+		xOffs = 15;
 }
 
 Void DrawSocialMenu(tContext *pContext)
