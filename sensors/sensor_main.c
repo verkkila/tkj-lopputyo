@@ -209,7 +209,7 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 
     TMP007_Setup(&i2c);
     OPT3001_Setup(&i2c);
-    BMP280_Setup(&i2c);
+    //BMP280_Setup(&i2c);
 
     //Event_pend(g_hEvent, SENSOR_SETUP_COMPLETE, Event_Id_NONE, BIOS_WAIT_FOREVER);
 

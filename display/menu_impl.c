@@ -16,7 +16,7 @@ Menu sunMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawSunMenu,
 	.options = {
-			{&activitiesMenu, Sensors_StopTrackingSun, "Takaisin"},
+			{&activitiesMenu, Menu_StopS, "Takaisin"},
 			{NULL, NULL, ""}
 	}
 };
@@ -27,7 +27,7 @@ Menu airMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawAirMenu,
 	.options = {
-			{&activitiesMenu, Sensors_StopTrackingFreshAir, "Takaisin"},
+			{&activitiesMenu, Menu_StopA, "Takaisin"},
 			{NULL, NULL, ""}
 	}
 };
@@ -38,7 +38,7 @@ Menu physMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawPhysMenu,
 	.options = {
-			{&activitiesMenu, Sensors_StopTrackingPhysical, "Takaisin"},
+			{&activitiesMenu, Menu_StopP, "Takaisin"},
 			{NULL, NULL, ""}
 	}
 };
@@ -60,10 +60,10 @@ Menu activitiesMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawActivitiesMenu,
 	.options = {
-			{&mainMenu, Menu_StopRedrawing, "Takaisin"},
-			{&sunMenu, Sensors_StartTrackingSun, "Aurinko"},
-			{&airMenu, Sensors_StartTrackingFreshAir, "Raikas ilma"},
-			{&physMenu, Sensors_StartTrackingPhysical, "Liikunta"},
+			{&mainMenu, NULL, "Takaisin"},
+			{&sunMenu, Menu_StartS, "Aurinko"},
+			{&airMenu, Menu_StartA, "Raikas ilma"},
+			{&physMenu, Menu_StartP, "Liikunta"},
 			{&socialMenu, NULL, "Kaverit"},
 			{NULL, NULL, ""}
 	}
@@ -77,7 +77,7 @@ Menu mainMenu = {
 	.options = {
 			{NULL, NULL, "Luo uusi"},
 			{NULL, NULL, "Hae/vie"},
-			{&activitiesMenu, Menu_StartRedrawing, "Harrasta"},
+			{&activitiesMenu, NULL, "Harrasta"},
 			{NULL, NULL, "Sammuta"},
 			{NULL, NULL, ""}
 	}

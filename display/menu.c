@@ -144,6 +144,38 @@ Void Menu_StopRedrawing(void)
 	Clock_stop(redrawClock);
 }
 
+Void Menu_StartS(void)
+{
+	Sensors_StartTrackingSun();
+	Menu_StartRedrawing();
+}
+Void Menu_StartA(void)
+{
+	Sensors_StartTrackingFreshAir();
+	Menu_StartRedrawing();
+}
+Void Menu_StartP(void)
+{
+	Sensors_StartTrackingPhysical();
+	Menu_StartRedrawing();
+}
+
+Void Menu_StopS(void)
+{
+	Sensors_StopTrackingSun();
+	Menu_StopRedrawing();
+}
+Void Menu_StopA(void)
+{
+	Sensors_StopTrackingFreshAir();
+	Menu_StopRedrawing();
+}
+Void Menu_StopP(void)
+{
+	Sensors_StopTrackingPhysical();
+	Menu_StopRedrawing();
+}
+
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 {
 	unsigned char selectedOption = currentMenu->selectedOption;
@@ -196,17 +228,19 @@ Void DrawActivitiesMenu(tContext *pContext)
 	int i;
 	Display_print0(hDisplay, 0, 2, "Harrastus");
 
-	Display_print1(hDisplay, 8, 3, "%i", currentGotchi->a);
-	GrImageDraw(pContext, &img_Sun, 8, 8*8);
+	Display_print1(hDisplay, 8, 4, "%i", currentGotchi->a);
+	GrImageDraw(pContext, &img_Sun, 16, 8*8);
 
-	Display_print1(hDisplay, 9, 3, "%i", currentGotchi->r);
-	GrImageDraw(pContext, &img_FreshAir, 8, 9*8);
+	Display_print1(hDisplay, 9, 4, "%i", currentGotchi->r);
+	GrImageDraw(pContext, &img_FreshAir, 16, 9*8);
 
 	Display_print1(hDisplay, 10, 4, "%i", currentGotchi->l);
-	GrImageDraw(pContext, &img_Physical, 4, 10*8);
+	GrImageDraw(pContext, &img_Physical, 12, 10*8);
+
+	Display_print1(hDisplay, 11, 4, "%i", currentGotchi->s);
 	tImage test;
 	Menu_GetImageFromBitmap(&test, currentGotchi->image);
-	GrImageDraw(pContext, &test, 12, 10*8);
+	GrImageDraw(pContext, &test, 20, 10*8);
 
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		int x = 3;
@@ -291,7 +325,7 @@ Void DrawAirMenu(tContext *pContext)
 Void DrawPhysMenu(tContext *pContext)
 {
 	int i;
-	static int xOffs = 15;
+	static int xPos = 8, xVel = 5;
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
@@ -299,11 +333,14 @@ Void DrawPhysMenu(tContext *pContext)
 
 	static int offset = 0;
 	GrLineDraw(pContext, 0, 75, 96, 75);
-	GrCircleDraw(pContext, xOffs, 50-sin(-0.7854+(offset*0.20943))*10, 15);
+	GrCircleDraw(pContext, xPos, 50-sin(-0.7854+(offset*0.20943))*10, 16);
 	offset += 3;
-	xOffs += 4;
-	if (xOffs > 80)
-		xOffs = 15;
+	xPos += xVel;
+	if (xPos > 80) {
+		xVel = -5;
+	} else if (xPos < 16) {
+		xVel = 5;
+	}
 }
 
 Void DrawSocialMenu(tContext *pContext)
