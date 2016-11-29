@@ -15,6 +15,9 @@
 
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/I2C.h>
+#include <ti/drivers/i2c/I2CCC26XX.h>
+#include <ti/drivers/PIN.h>
+#include <ti/drivers/pin/PINCC26XX.h>
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Semaphore.h>

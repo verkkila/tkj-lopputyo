@@ -72,6 +72,8 @@ enum Gscale {
   GFS_2000DPS
 };
 
+vec3f MPU9250_data[MPU9250_NUM_VALUES];
+
 // Prototypes
 void initMPU9250();
 void accelgyrocalMPU9250(float *dest1, float *dest2);
@@ -84,7 +86,17 @@ float aRes, gRes;      // scale resolutions per LSB for the sensors
 float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0};      // Bias corrections for gyro and accelerometer
 float SelfTest[6];
 
-I2C_Handle i2c;
+void MPU9250_AddData()
+{
+	vec3f a, g;
+	if (mpu9250_index >= MPU9250_NUM_VALUES) {
+		System_printf("MPU9250 is full.\n");
+		mpu9250_index = 0;
+	} else {
+		MPU9250_GetData(&a, &g);
+		++mpu9250_index;
+	}
+}
 
 void writeByte(uint8_t reg, uint8_t data) {
 
@@ -99,7 +111,7 @@ void writeByte(uint8_t reg, uint8_t data) {
     i2cTransaction.readBuf = NULL;
     i2cTransaction.readCount = 0;
 
-    if (!I2C_transfer(i2c, &i2cTransaction)) {
+    if (!I2C_transfer(*pMpuI2C, &i2cTransaction)) {
     	System_printf("MPU9250: write=%x data=%x FAILED\n",reg,data);
     }
     System_flush();
@@ -117,7 +129,7 @@ void readByte(uint8_t reg, uint8_t count, uint8_t *data) {
     i2cTransaction.readBuf = data;
     i2cTransaction.readCount = count;
 
-    if (!I2C_transfer(i2c, &i2cTransaction)) {
+    if (!I2C_transfer(*pMpuI2C, &i2cTransaction)) {
     	System_printf("MPU9250: read=%x count=%x FAILED\n",reg,count);
     }
     System_flush();
@@ -171,8 +183,6 @@ void getAres() {
 }
 
 void MPU9250_Setup(I2C_Handle *i2c_orig) {
-	i2c = *i2c_orig;
-
 	System_printf("MPU9250: Setup start...\n");
 	System_flush();
 
@@ -198,7 +208,7 @@ void MPU9250_Setup(I2C_Handle *i2c_orig) {
 	System_flush();
 }
 
-void MPU9250_GetData(I2C_Handle *i2c, vec3f *accel, vec3f *gyro) {
+void MPU9250_GetData(vec3f *accel, vec3f *gyro) {
 
 	uint8_t rawData[14];  // Register data
 	int16_t data[7]; // Raw data values

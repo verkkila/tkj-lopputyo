@@ -171,6 +171,7 @@ void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer)
 		if (transfer) {
 			System_printf("BMP280: Trimming write ok!\n");
 			BMP280_SetTrimming(msg->readBuf);
+			Event_post(g_hEvent, SENSOR_SETUP_COMPLETE);
 		} else
 			System_abort("BMP280: Trimming write failed!\n");
 		break;
