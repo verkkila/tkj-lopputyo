@@ -12,6 +12,8 @@
 #ifndef MPU9250_H_
 #define MPU9250_H_
 
+#include <ti/sysbios/knl/Semaphore.h>
+#include <ti/sysbios/BIOS.h>
 #include <ti/drivers/I2C.h>
 #include "util/vec3f.h"
 #include "sensordefs.h"
@@ -22,6 +24,7 @@ extern int mpu9250_index;
 vec3f MPU9250_Data[MPU9250_NUM_VALUES];
 
 void MPU9250_Setup(I2C_Handle *i2c_orig);
+void MPU9250_TransferComplete();
 void MPU9250_AddData();
 void MPU9250_GetData(vec3f *accel, vec3f *gyro);
 

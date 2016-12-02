@@ -72,6 +72,8 @@ enum Gscale {
   GFS_2000DPS
 };
 
+Semaphore_Handle i2cComplete;
+
 vec3f MPU9250_data[MPU9250_NUM_VALUES];
 
 // Prototypes
@@ -86,14 +88,18 @@ float aRes, gRes;      // scale resolutions per LSB for the sensors
 float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0};      // Bias corrections for gyro and accelerometer
 float SelfTest[6];
 
+void MPU9250_TransferComplete()
+{
+	Semaphore_post(i2cComplete);
+}
+
 void MPU9250_AddData()
 {
 	vec3f a, g;
 	if (mpu9250_index >= MPU9250_NUM_VALUES) {
 		System_printf("MPU9250 is full.\n");
-		mpu9250_index = 0;
 	} else {
-		MPU9250_GetData(&a, &g);
+		MPU9250_GetData(&MPU9250_Data[mpu9250_index], &g);
 		++mpu9250_index;
 	}
 }
@@ -111,9 +117,8 @@ void writeByte(uint8_t reg, uint8_t data) {
     i2cTransaction.readBuf = NULL;
     i2cTransaction.readCount = 0;
 
-    if (!I2C_transfer(*pMpuI2C, &i2cTransaction)) {
-    	System_printf("MPU9250: write=%x data=%x FAILED\n",reg,data);
-    }
+    I2C_transfer(*pMpuI2C, &i2cTransaction);
+    Semaphore_pend(i2cComplete, BIOS_WAIT_FOREVER);
     System_flush();
 }
 
@@ -129,9 +134,8 @@ void readByte(uint8_t reg, uint8_t count, uint8_t *data) {
     i2cTransaction.readBuf = data;
     i2cTransaction.readCount = count;
 
-    if (!I2C_transfer(*pMpuI2C, &i2cTransaction)) {
-    	System_printf("MPU9250: read=%x count=%x FAILED\n",reg,count);
-    }
+    I2C_transfer(*pMpuI2C, &i2cTransaction);
+    Semaphore_pend(i2cComplete, BIOS_WAIT_FOREVER);
     System_flush();
 }
 
@@ -183,8 +187,15 @@ void getAres() {
 }
 
 void MPU9250_Setup(I2C_Handle *i2c_orig) {
+	Semaphore_Params semParams;
 	System_printf("MPU9250: Setup start...\n");
 	System_flush();
+
+	Semaphore_Params_init(&semParams);
+	i2cComplete = Semaphore_create(0, &semParams, NULL);
+	if (!i2cComplete) {
+		System_abort("Failed to create semaphore");
+	}
 
 	// Read the WHO_AM_I register, this is a good test of communication
 	// uint8_t c;

@@ -64,6 +64,16 @@ Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 	}
 }
 
+Void I2C_MPU9250_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
+{
+	if (transfer)
+		MPU9250_TransferComplete();
+	else {
+		System_printf("MPU9250 I2C failed.\n");
+	}
+	System_flush();
+}
+
 static void SwitchI2CMode()
 {
 	I2C_Handle temp;
@@ -277,6 +287,8 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 
     I2C_Params_init(&i2cMpuParams);
     i2cMpuParams.bitRate = I2C_400kHz;
+    i2cMpuParams.transferMode = I2C_MODE_CALLBACK;
+    i2cMpuParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_MPU9250_CompleteFxn;
     i2cMpuParams.custom = (uintptr_t)&i2cMPUCfg;
 
     i2cMpu = I2C_open(Board_I2C, &i2cMpuParams);
@@ -323,8 +335,10 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		} else if (isTrackingPhysical) {
 			if (i2cMode != I2CMODE_MPU9250)
 				SwitchI2CMode();
-
-			MPU9250_AddData();
+			Clock_stop(MPU9250_Clock);
+			AccumulatePhysicalActivity();
+			mpu9250_index = 0;
+			Clock_start(MPU9250_Clock);
 		}
 		Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
 		System_flush();
