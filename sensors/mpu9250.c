@@ -74,7 +74,7 @@ enum Gscale {
 
 Semaphore_Handle i2cComplete;
 
-vec3f MPU9250_data[MPU9250_NUM_VALUES];
+vec3f MPU9250_data[MPU9250_NUM_VALUES] = {0};
 
 // Prototypes
 void initMPU9250();
@@ -87,7 +87,9 @@ uint8_t Ascale = AFS_8G;
 float aRes, gRes;      // scale resolutions per LSB for the sensors
 float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0};      // Bias corrections for gyro and accelerometer
 float SelfTest[6];
-
+static I2C_Transaction read_i2cTransaction;
+static I2C_Transaction write_i2cTransaction;
+static uint8_t txBuffer[2];
 void MPU9250_TransferComplete()
 {
 	Semaphore_post(i2cComplete);
@@ -95,40 +97,42 @@ void MPU9250_TransferComplete()
 
 void MPU9250_AddData()
 {
-	vec3f a, g;
+	vec3f g;
 	if (mpu9250_index >= MPU9250_NUM_VALUES) {
 		System_printf("MPU9250 is full.\n");
+		mpu9250_index = MPU9250_NUM_VALUES;
 	} else {
 		MPU9250_GetData(&MPU9250_Data[mpu9250_index], &g);
 		++mpu9250_index;
+		//mpu9250_index %= MPU9250_NUM_VALUES;
 	}
 }
 
 void writeByte(uint8_t reg, uint8_t data)
 {
-	txBuffer[0] = reg;
-	txBuffer[1] = data;
-    i2cTransaction.slaveAddress = Board_MPU9250_ADDR;
-    i2cTransaction.writeBuf = txBuffer;
-    i2cTransaction.writeCount = 2;
-    i2cTransaction.readBuf = NULL;
-    i2cTransaction.readCount = 0;
+    txBuffer[0] = reg;
+    txBuffer[1] = data;
+    write_i2cTransaction.slaveAddress = Board_MPU9250_ADDR;
+    write_i2cTransaction.writeBuf = txBuffer;
+    write_i2cTransaction.writeCount = 2;
+    write_i2cTransaction.readBuf = NULL;
+    write_i2cTransaction.readCount = 0;
 
-    I2C_transfer(*pMpuI2C, &i2cTransaction);
+    I2C_transfer(*pMpuI2C, &write_i2cTransaction);
     Semaphore_pend(i2cComplete, BIOS_WAIT_FOREVER);
     System_flush();
 }
 
 void readByte(uint8_t reg, uint8_t count, uint8_t *data)
 {
-	txBuffer[0] = reg;
-    i2cTransaction.slaveAddress = Board_MPU9250_ADDR;
-    i2cTransaction.writeBuf = txBuffer;
-    i2cTransaction.writeCount = 1;
-    i2cTransaction.readBuf = data;
-    i2cTransaction.readCount = count;
+    txBuffer[0] = reg;
+    read_i2cTransaction.slaveAddress = Board_MPU9250_ADDR;
+    read_i2cTransaction.writeBuf = txBuffer;
+    read_i2cTransaction.writeCount = 1;
+    read_i2cTransaction.readBuf = data;
+    read_i2cTransaction.readCount = count;
 
-    I2C_transfer(*pMpuI2C, &i2cTransaction);
+    I2C_transfer(*pMpuI2C, &read_i2cTransaction);
     Semaphore_pend(i2cComplete, BIOS_WAIT_FOREVER);
     System_flush();
 }
