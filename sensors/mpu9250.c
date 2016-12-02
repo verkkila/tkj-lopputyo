@@ -104,11 +104,8 @@ void MPU9250_AddData()
 	}
 }
 
-void writeByte(uint8_t reg, uint8_t data) {
-
-	I2C_Transaction i2cTransaction;
-	uint8_t txBuffer[2];
-
+void writeByte(uint8_t reg, uint8_t data)
+{
 	txBuffer[0] = reg;
 	txBuffer[1] = data;
     i2cTransaction.slaveAddress = Board_MPU9250_ADDR;
@@ -122,11 +119,8 @@ void writeByte(uint8_t reg, uint8_t data) {
     System_flush();
 }
 
-void readByte(uint8_t reg, uint8_t count, uint8_t *data) {
-
-	I2C_Transaction i2cTransaction;
-	uint8_t txBuffer[1];
-
+void readByte(uint8_t reg, uint8_t count, uint8_t *data)
+{
 	txBuffer[0] = reg;
     i2cTransaction.slaveAddress = Board_MPU9250_ADDR;
     i2cTransaction.writeBuf = txBuffer;

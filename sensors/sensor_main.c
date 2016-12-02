@@ -218,7 +218,7 @@ static void AccumulatePhysicalActivity(void)
 		}
 	}
 	temp_l *= 0.001f;
-	currentGotchi->r += floor(temp_l);
+	currentGotchi->l += floor(temp_l);
 }
 
 Void Sensors_ReadAll(UArg arg0, UArg arg1)
