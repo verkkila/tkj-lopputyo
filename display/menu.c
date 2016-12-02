@@ -405,8 +405,7 @@ Void DrawScreen(UArg arg0, UArg arg1)
 			}
 			GrFlush(context);
 		}
-		//Event_pend(g_hEvent, Event_Id_NONE, BUTTON_PRESSED | DATA_CONVERSION_COMPLETE | UPDATE_SCREEN, BIOS_WAIT_FOREVER);
-		Task_sleep(1000000 / Clock_tickPeriod);
+		Event_pend(g_hEvent, Event_Id_NONE, BUTTON_PRESSED | DATA_CONVERSION_COMPLETE | UPDATE_SCREEN, BIOS_WAIT_FOREVER);
 	}
 }
 

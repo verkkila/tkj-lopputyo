@@ -67,7 +67,7 @@ Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 Void I2C_MPU9250_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
 	if (transfer)
-		MPU9250_TransferComplete();
+		MPU9250_TransferComplete(msg);
 	else {
 		System_printf("MPU9250 I2C failed.\n");
 	}
@@ -113,7 +113,7 @@ Void OPT3001_Tick(UArg arg)
 
 Void MPU9250_Tick(UArg arg)
 {
-	MPU9250_AddData();
+	MPU9250_Read();
 	//System_printf("OPT3001 ticks %i\n", Clock_getTicks());
 	//System_flush();
 }
