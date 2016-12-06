@@ -16,6 +16,7 @@
 #include "menu.h"
 
 #define MAX_OPTIONS 8
+#define MAX_CALLBACKS 3
 
 typedef Void(*DrawMenuFxn)(tContext*);
 typedef void(*MenuOptionFxn)(void);
@@ -34,7 +35,8 @@ typedef struct Menu* pMenu;
 
 typedef struct {
 	pMenu next;
-	MenuOptionFxn action;
+	MenuOptionFxn actions[MAX_CALLBACKS];
+	//MenuOptionFxn action;
 	const char *text;
 } MenuOption;
 

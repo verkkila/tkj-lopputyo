@@ -93,12 +93,11 @@ static uint8_t txBuffer[2];
 
 static uint8_t rawData[14];
 
-vec3f accel, gyro;
-
 void MPU9250_TransferComplete(I2C_Transaction *msg)
 {
 	int16_t data[7];
 	uint8_t reg = *(uint8_t*)msg->writeBuf;
+	vec3f accel, gyro;
 
 	Semaphore_post(i2cComplete);
 	if (reg == ACCEL_XOUT_H && msg->readCount == 14) {
@@ -106,35 +105,35 @@ void MPU9250_TransferComplete(I2C_Transaction *msg)
 		data[1] = (rawData[2] << 8) | rawData[3];
 		data[2] = (rawData[4] << 8) | rawData[5];
 
+		/*
 		data[4] = (rawData[8] << 8) | rawData[9];
 		data[5] = (rawData[10] << 8) | rawData[11];
 		data[6] = (rawData[12] << 8) | rawData[13];
+		*/
 		/* Now we'll calculate the accleration value into actual g's */
 		accel.x = (float)data[0]*aRes - accelBias[0];
 		accel.y = (float)data[1]*aRes - accelBias[1];
 		accel.z = (float)data[2]*aRes - accelBias[2];
 
 		/* Calculate the gyro value into actual degrees per second */
-		/* If you want raw data, multiplying with gRes is not needed */
+		/* If you want raw data, multiplying with gRes is not needed
 		gyro.x = (float)data[4]*gRes;
 		gyro.y = (float)data[5]*gRes;
 		gyro.z = (float)data[6]*gRes;
+		*/
+		MPU9250_AddData(&accel);
 	}
 }
 
-void MPU9250_AddData()
+void MPU9250_AddData(vec3f *a)
 {
-	/*
-	vec3f g;
 	if (mpu9250_index >= MPU9250_NUM_VALUES) {
 		System_printf("MPU9250 is full.\n");
 		mpu9250_index = MPU9250_NUM_VALUES;
 	} else {
-		MPU9250_GetData(&MPU9250_Data[mpu9250_index], &g);
+		MPU9250_Data[mpu9250_index] = *a;
 		++mpu9250_index;
-		//mpu9250_index %= MPU9250_NUM_VALUES;
 	}
-	*/
 }
 
 void readByte2(uint8_t reg, uint8_t count, uint8_t *data)
@@ -145,7 +144,6 @@ void readByte2(uint8_t reg, uint8_t count, uint8_t *data)
     read_i2cTransaction.writeCount = 1;
     read_i2cTransaction.readBuf = rawData;
     read_i2cTransaction.readCount = count;
-
     I2C_transfer(*pMpuI2C, &read_i2cTransaction);
 }
 
@@ -161,7 +159,6 @@ void writeByte(uint8_t reg, uint8_t data)
 
     I2C_transfer(*pMpuI2C, &write_i2cTransaction);
     Semaphore_pend(i2cComplete, BIOS_WAIT_FOREVER);
-    System_flush();
 }
 
 void readByte(uint8_t reg, uint8_t count, uint8_t *data)
@@ -175,7 +172,6 @@ void readByte(uint8_t reg, uint8_t count, uint8_t *data)
 
     I2C_transfer(*pMpuI2C, &read_i2cTransaction);
     Semaphore_pend(i2cComplete, BIOS_WAIT_FOREVER);
-    System_flush();
 }
 
 void delay(uint16_t delay) {

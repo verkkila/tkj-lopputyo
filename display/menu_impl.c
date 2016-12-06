@@ -16,8 +16,8 @@ Menu sunMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawSunMenu,
 	.options = {
-			{&activitiesMenu, Menu_StopS, "Takaisin"},
-			{NULL, NULL, ""}
+			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingSun, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -27,8 +27,8 @@ Menu airMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawAirMenu,
 	.options = {
-			{&activitiesMenu, Menu_StopA, "Takaisin"},
-			{NULL, NULL, ""}
+			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingFreshAir, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -38,8 +38,8 @@ Menu physMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawPhysMenu,
 	.options = {
-			{&activitiesMenu, Menu_StopP, "Takaisin"},
-			{NULL, NULL, ""}
+			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingPhysical, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -49,8 +49,8 @@ Menu socialMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawSocialMenu,
 	.options = {
-			{&activitiesMenu, NULL, "Takaisin"},
-			{NULL, NULL, ""}
+			{&activitiesMenu, {NULL, NULL, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -60,12 +60,12 @@ Menu activitiesMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawActivitiesMenu,
 	.options = {
-			{&mainMenu, NULL, "Takaisin"},
-			{&sunMenu, Menu_StartS, "Aurinko"},
-			{&airMenu, Menu_StartA, "Raikas ilma"},
-			{&physMenu, Menu_StartP, "Liikunta"},
-			{&socialMenu, NULL, "Kaverit"},
-			{NULL, NULL, ""}
+			{&mainMenu, {NULL, NULL, NULL}, "Takaisin"},
+			{&sunMenu, {Menu_StartRedrawing, Sensors_StartTrackingSun, NULL}, "Aurinko"},
+			{&airMenu, {Menu_StartRedrawing, Sensors_StartTrackingFreshAir, NULL}, "Raikas ilma"},
+			{&physMenu, {Menu_StartRedrawing, Sensors_StartTrackingPhysical, NULL}, "Liikunta"},
+			{&socialMenu, {NULL, NULL, NULL}, "Kaverit"},
+			{NULL, {NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -75,11 +75,11 @@ Menu mainMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawMainMenu,
 	.options = {
-			{NULL, NULL, "Luo uusi"},
-			{NULL, NULL, "Hae/vie"},
-			{&activitiesMenu, NULL, "Harrasta"},
-			{NULL, NULL, "Sammuta"},
-			{NULL, NULL, ""}
+			{NULL, {Comm_CreateNewGotchi, NULL, NULL}, "Luo uusi"},
+			{NULL, {NULL, NULL, NULL}, "Hae/vie"},
+			{&activitiesMenu, {NULL, NULL, NULL}, "Harrasta"},
+			{NULL, {NULL, NULL, NULL}, "Sammuta"},
+			{NULL, {NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -90,5 +90,5 @@ const Menu *GetFirstMenu()
 
 int isLastOption(const MenuOption opt)
 {
-	return opt.action == NULL && opt.next == NULL && !strlen(opt.text);
+	return opt.actions[0] == NULL && opt.next == NULL && !strlen(opt.text);
 }

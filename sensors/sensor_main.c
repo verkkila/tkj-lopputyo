@@ -10,7 +10,7 @@
 #define I2CMODE_NORMAL 0
 #define I2CMODE_MPU9250 1
 
-#define SENSORS_STACKSIZE 4096
+#define SENSORS_STACKSIZE 2048
 Char sensorStack[SENSORS_STACKSIZE];
 
 I2C_Handle *pI2C = NULL;
@@ -259,6 +259,12 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		Master_Clock == NULL) {
 		System_abort("Failed to create sensor clocks.");
 	}
+
+	Clock_stop(TMP007_Clock);
+	Clock_stop(BMP280_Clock);
+	Clock_stop(OPT3001_Clock);
+	Clock_stop(MPU9250_Clock);
+	Clock_stop(Master_Clock);
 
 	Semaphore_Params_init(&semParams);
 	sem = Semaphore_create(0, &semParams, NULL);

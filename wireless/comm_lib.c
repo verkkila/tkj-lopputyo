@@ -18,14 +18,13 @@
 #include <ti/sysbios/hal/Hwi.h>
 
 #include "wireless/comm_lib.h"
-#include "wireless/ERRORS.h"
 #include "wireless/CWC_CC2650_154Drv.h"
 #include "wireless/CWC_IntegrTest.h"
 
 #define APP_ADVERTISE_PERIOD	250000
 
 __STATIC_INLINE int16_t CC2650_RXEntry_Decode(uint8_t *ptr_DataStart,CWC_CC2650_RX_Entry_struct_t *ptr_CC2650_RXQueueStruct);
-__STATIC_INLINE void CC2650_RXEntry_Release(uint8_t *ptr_Data);
+__STATIC_INLINE int16_t CC2650_RXEntry_Release(uint8_t *ptr_Data);
 
 static volatile uint8_t u8_TXd_Flag = false;
 static volatile uint8_t u8_RXd_Flag = false;
@@ -73,10 +72,7 @@ void Init6LoWPAN(void) {
 	//init the radio
 	int32_t result=CWC_CC2650_154_Init(&str_Radio_Init);
 	if(result!=1) {
-
-		System_printf("Error critical\n");
-		System_flush();
-		ERROR_CRITICAL(); //something goes wrong - terminate
+		System_abort("Error in Radio\n");
 	}
 
     // INT_RFC_CPE_0
@@ -128,17 +124,20 @@ int8_t Receive6LoWPAN(uint16_t *senderAddr, char *payload, uint8_t maxLen) {
 	u8_RXd_Flag=0;//think twice before moving this line!
 
 	if(rx_read_entry==NULL) {
-		ERROR_CRITICAL();//a basic check of input
+		System_abort("Error in Radio");
 	}
 
 	//process RX entry from radio
 	entry = (rfc_dataEntryGeneral_t *)rx_read_entry;
 	if(entry->status!=DATA_ENTRY_FINISHED) {
-		ERROR_CRITICAL();
+		System_abort("Error in Radio");
 	}
 
 	//decode the data
-	i16_MACPDU_length=CC2650_RXEntry_Decode(rx_read_entry+CC2650_RX_ENTRY_HEADER_OVERHEAD_BYTES,&CC2650_RXQueueStruct);
+	int32_t result = i16_MACPDU_length=CC2650_RXEntry_Decode(rx_read_entry+CC2650_RX_ENTRY_HEADER_OVERHEAD_BYTES,&CC2650_RXQueueStruct);
+	if(result==0) {
+		System_abort("Error in Radio\n");
+	}
 
 	// sender address??
 	*senderAddr = CC2650_RXQueueStruct.ptr_MACdata->str_Header.SrcAddr;
@@ -152,11 +151,14 @@ int8_t Receive6LoWPAN(uint16_t *senderAddr, char *payload, uint8_t maxLen) {
 	}
 
 	// copy to buffer
-	int32_t result = memcpy(payload, CC2650_RXQueueStruct.ptr_MACdata->u8_Payload, i16_MACPDU_length);
+	result = memcpy(payload, CC2650_RXQueueStruct.ptr_MACdata->u8_Payload, i16_MACPDU_length);
 
 	//release the entry
 	CC2650_RXEntry_Release(rx_read_entry);
 	rx_read_entry = entry->pNextEntry;
+
+	//entry=(rfc_dataEntryGeneral_t*)rx_read_entry;
+	//entry=entry->pNextEntry;
 
 	return i16_MACPDU_length;
 }
@@ -173,15 +175,41 @@ int8_t Receive6LoWPAN(uint16_t *senderAddr, char *payload, uint8_t maxLen) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Radio_IRQ(CWC_CC2650_154_Events_t Event) {
 
+	rfc_dataEntryGeneral_t *tmp;
+
 	switch(Event){
 		case CWC_CC2650_154_EVENT_TXD_OK:
 			u8_TXd_Flag=1;
 			break;
 		case CWC_CC2650_154_EVENT_RXD_OK:
-			u8_RXd_Flag=1;
+			{
+				rfc_dataEntryGeneral_t *entry,*nxt_entry;
+				entry = (rfc_dataEntryGeneral_t *)rx_read_entry;
+				nxt_entry=(rfc_dataEntryGeneral_t *)entry->pNextEntry;
+				while(nxt_entry->status>1){
+					tmp=entry;
+					entry = entry->pNextEntry;
+					nxt_entry = entry->pNextEntry;
+					CC2650_RXEntry_Release(tmp);
+				}
+				rx_read_entry=entry;
+				u8_RXd_Flag=1;
+			}
 			break;
 		case CWC_CC2650_154_EVENT_RXD_NOK:
-			u8_RX_Error_Flag=1;
+			{
+				rfc_dataEntryGeneral_t *entry,*nxt_entry;
+				entry = (rfc_dataEntryGeneral_t *)rx_read_entry;
+				nxt_entry=(rfc_dataEntryGeneral_t *)entry->pNextEntry;
+				while(nxt_entry->status>1){
+					tmp=entry;
+					entry = entry->pNextEntry;
+					nxt_entry = entry->pNextEntry;
+					CC2650_RXEntry_Release(tmp);
+				}
+				rx_read_entry=entry;
+				u8_RXd_Flag=1;
+			}
 			break;
 		default:
 			break;
@@ -196,7 +224,7 @@ void Radio_IRQ(CWC_CC2650_154_Events_t Event) {
 //Author(s):		Konstantin Mikhaylov
 //Inputs: 			uint8_t *ptr_DataStart - pointer to the RX entry start
 //					CWC_CC2650_RX_Entry_struct_t *ptr_CC2650_RXQueueStruct - pointer to the structure to be filled in
-//Outputs:			int16_t - length of the MAC payload
+//Outputs:			int16_t - length of the MAC payload, 0 - error
 //Dependences:		none
 //Notes:
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +232,7 @@ __STATIC_INLINE int16_t
 CC2650_RXEntry_Decode(uint8_t *ptr_DataStart,CWC_CC2650_RX_Entry_struct_t *ptr_CC2650_RXQueueStruct){
 	uint8_t *ptr_u8;
 	uint8_t u8_length;
-	if((ptr_CC2650_RXQueueStruct==NULL)||(ptr_DataStart==NULL))ERROR_CRITICAL();
+	if((ptr_CC2650_RXQueueStruct==NULL)||(ptr_DataStart==NULL)) return 0;
 	ptr_u8=ptr_DataStart;
 	u8_length=*ptr_u8;
 	ptr_CC2650_RXQueueStruct->ptr_ElementLength=ptr_u8;
@@ -232,16 +260,17 @@ CC2650_RXEntry_Decode(uint8_t *ptr_DataStart,CWC_CC2650_RX_Entry_struct_t *ptr_C
 //Version & Data:	0.01 2016.06.14
 //Author(s):		Konstantin Mikhaylov
 //Inputs: 			uint8_t *ptr_Data - pointer to the memory where structure to be released is located
-//Outputs:			none
+//Outputs:			0 - error
 //Dependences:
 //Notes:			More or less mimics the respective function of Contiki
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-__STATIC_INLINE void
+__STATIC_INLINE int16_t
 CC2650_RXEntry_Release(uint8_t *ptr_Data){
 	rfc_dataEntryGeneral_t *ptr_CC2650_DataEntry;
-	if(ptr_Data==NULL)ERROR_CRITICAL();//wrong input formatting
+	if(ptr_Data==NULL)return 0;//wrong input formatting
 	ptr_CC2650_DataEntry=ptr_Data;
 	memset(ptr_Data+CC2650_RX_ENTRY_HEADER_OVERHEAD_BYTES,0x00,CC2650_RX_ENTRY_ELEMENTLENGTH_BYTES);//clear length
 	ptr_CC2650_DataEntry->status=DATA_ENTRY_PENDING;//update status
+	return 1;
 }
 

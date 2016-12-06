@@ -24,7 +24,6 @@
 //other stuff
 #include "ieee_cmd.h"
 #include "CWC_CC2650_154Drv.h"
-#include "ERRORS.h"
 
 //CONSTANTS
 //Clocks to be launched
@@ -412,8 +411,8 @@ uint8_t
 CWC_CC2650_154_SendDataPacket_Forced(uint16_t DestAddr, uint8_t *ptr_Payload, uint8_t u8_length){
 	volatile int result = 0;
 	//check the input data
-	if(ptr_Payload==NULL)ERROR_CRITICAL();//fail - pointer to data missing
-	if(u8_length>116)ERROR_CRITICAL();//invalid length - fragmentation not supported
+	if(ptr_Payload==NULL)return 0;//fail - pointer to data missing
+	if(u8_length>116)return 0;//invalid length - fragmentation not supported
 
 	//check the status
 	switch(my_CC2650_Status.myState){

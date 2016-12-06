@@ -7,7 +7,7 @@
 
 #include "menu.h"
 
-#define DISPLAY_STACKSIZE 3172
+#define DISPLAY_STACKSIZE 2048
 Char displayStack[DISPLAY_STACKSIZE];
 
 Display_Handle hDisplay;
@@ -190,9 +190,16 @@ Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 static void Menu_NextState(void)
 {
 	unsigned char selectedOption = currentMenu->selectedOption;
+	int fn = 0;
+	while (currentMenu->options[selectedOption].actions[fn] != NULL) {
+		currentMenu->options[selectedOption].actions[fn]();
+		++fn;
+	}
+	/*
 	if (currentMenu->options[selectedOption].action != NULL) {
 		currentMenu->options[selectedOption].action();
 	}
+	*/
 	if (currentMenu->options[selectedOption].next != NULL) {
 		currentMenu = currentMenu->options[selectedOption].next;
 	}

@@ -129,11 +129,10 @@ Int main(void)
     	System_abort("Event create failed.\n");
     }
 
-    Init6LoWPAN();
     /* Task */
     Sensors_Start();
     Menu_Start();
-    //Comm_Start();
+    Comm_Start();
 
     currentGotchi = &testiGotchi;
 
