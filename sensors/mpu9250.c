@@ -91,12 +91,15 @@ float SelfTest[6];
 static uint8_t txBuffer[2];
 static uint8_t rawData[14];
 
+static const int asdasd = 0xABABABAB;
+
 static I2C_Transaction readAcceleration = {
 		.slaveAddress = Board_MPU9250_ADDR,
 		.writeBuf = txBuffer,
 		.writeCount = 1,
 		.readBuf = rawData,
-		.readCount = 6
+		.readCount = 6,
+		.arg = &asdasd
 };
 static I2C_Transaction read_i2cTransaction;
 static I2C_Transaction write_i2cTransaction;
@@ -109,7 +112,7 @@ void MPU9250_TransferComplete(I2C_Transaction *msg)
 	vec3f accel;
 
 	Semaphore_post(i2cComplete);
-	if (reg == ACCEL_XOUT_H && msg->readCount == 14) {
+	if (*(int*)(msg->arg) == 0xABABABAB) {
 		data[0] = (rawData[0] << 8) | rawData[1];
 		data[1] = (rawData[2] << 8) | rawData[3];
 		data[2] = (rawData[4] << 8) | rawData[5];

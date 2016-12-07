@@ -12,7 +12,7 @@ Char commStack[COMM_STACKSIZE];
 
 #define PAYLOAD_LENGTH 80
 char payload[PAYLOAD_LENGTH];
-Semaphore_Handle sem;
+Semaphore_Handle dataUpdate;
 
 int shouldSend = 0;
 int lastMsgParsed = 1;
@@ -147,7 +147,7 @@ void Comm_CreateNewGotchi(void)
 			currentGotchi.image[6],
 			currentGotchi.image[7],
 			currentGotchi.name);
-	Semaphore_post(sem);
+	Semaphore_post(dataUpdate);
 	shouldSend = 1;
 	msgParser = ParseCreateMsg;
 }
@@ -155,7 +155,7 @@ void Comm_CreateNewGotchi(void)
 void Comm_FetchGotchi(void)
 {
 	sprintf(payload, "Leiki:testi\n");
-	Semaphore_post(sem);
+	Semaphore_post(dataUpdate);
 	shouldSend = 1;
 	msgParser = ParseFetchMsg;
 }
@@ -167,7 +167,7 @@ void Comm_ReturnGotchi(void)
 											  currentGotchi.r,
 											  currentGotchi.s,
 											  currentGotchi.name);
-	Semaphore_post(sem);
+	Semaphore_post(dataUpdate);
 	shouldSend = 1;
 	msgParser = ParseReturnMsg;
 }
@@ -185,10 +185,10 @@ Void Comm_Update(UArg arg0, UArg arg1)
 {
 	uint16_t senderAddr;
 
-	Semaphore_Params semParams;
-	Semaphore_Params_init(&semParams);
-	sem = Semaphore_create(0, &semParams, NULL);
-	if (!sem) {
+	Semaphore_Params dataUpdateParams;
+	Semaphore_Params_init(&dataUpdateParams);
+	dataUpdate = Semaphore_create(0, &dataUpdateParams, NULL);
+	if (!dataUpdate) {
 		System_abort("Failed to create semaphore");
 	}
 

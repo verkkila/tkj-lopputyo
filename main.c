@@ -138,7 +138,7 @@ Int main(void)
     Init6LoWPAN();
     Display_CreateTask();
     Comm_CreateTask();
-    //Sensors_CreateTask();
+    Sensors_CreateTask();
 
     System_printf("Ready!\n");
     System_flush();

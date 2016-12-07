@@ -7,7 +7,7 @@
 
 #include <sensors/sensor_main.h>
 
-#define SENSORS_STACKSIZE 3072
+#define SENSORS_STACKSIZE 2048
 Char sensorStack[SENSORS_STACKSIZE];
 
 I2C_Handle hI2C;
@@ -34,7 +34,7 @@ Clock_Handle	TMP007_Clock;
 Clock_Handle	BMP280_Clock;
 Clock_Handle	OPT3001_Clock;
 Clock_Handle 	MPU9250_Clock;
-Semaphore_Handle	sem;
+Semaphore_Handle	convertValues;
 
 int tmp007_index = 0;
 int bmp280_index = 0;
@@ -85,6 +85,24 @@ static void SwitchI2CMode()
 	}
 }
 
+void Sensors_SwitchToNormalI2C()
+{
+	if (i2cMode == I2CMODE_NORMAL)
+		return;
+	I2C_close(*pMpuI2C);
+	hI2C = I2C_open(Board_I2C0, &i2cParams);
+	*pI2C = hI2C;
+}
+
+void Sensors_SwitchToMPU9250I2C()
+{
+	if (i2cMode == I2CMODE_MPU9250)
+		return;
+	I2C_close(*pI2C);
+	hI2C = I2C_open(Board_I2C, &i2cMpuParams);
+	*pMpuI2C = hI2C;
+}
+
 Void TMP007_Tick(UArg arg)
 {
 	TMP007_Read();
@@ -117,7 +135,7 @@ Void MPU9250_Tick(UArg arg)
 Void Master_Clock_Tick(UArg arg)
 {
 	//Event_post(g_hEvent, START_CONVERSIONS);
-	Semaphore_post(sem);
+	Semaphore_post(convertValues);
 	/*
 	*/
 }
@@ -139,6 +157,7 @@ static void AccumulateSun(void)
 
 void Sensors_StartTrackingSun(void)
 {
+	Sensors_SwitchToNormalI2C();
 	Clock_start(TMP007_Clock);
 	Clock_start(OPT3001_Clock);
 	Clock_start(Master_Clock);
@@ -176,6 +195,7 @@ static void AccumulateFreshAir(void)
 
 void Sensors_StartTrackingFreshAir(void)
 {
+	Sensors_SwitchToNormalI2C();
 	Clock_start(BMP280_Clock);
 	Clock_start(Master_Clock);
 	trackingMode = TRACKING_FRESH_AIR;
@@ -208,6 +228,7 @@ static void AccumulatePhysicalActivity(void)
 
 void Sensors_StartTrackingPhysical(void)
 {
+	Sensors_SwitchToMPU9250I2C();
 	trackingMode = TRACKING_PHYSICAL;
 	Clock_start(MPU9250_Clock);
 	Clock_start(Master_Clock);
@@ -232,7 +253,7 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 	Clock_Params	BMP280_Params;
 	Clock_Params	OPT3001_Params;
 	Clock_Params	MPU9250_Params;
-	Semaphore_Params	semParams;
+	Semaphore_Params	convertValuesParams;
 
 	Clock_Params_init(&TMP007_Params);
 	TMP007_Params.period = TMP007_READ_RATE_MS * 1000 / Clock_tickPeriod;
@@ -268,9 +289,9 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 	Clock_stop(MPU9250_Clock);
 	Clock_stop(Master_Clock);
 
-	Semaphore_Params_init(&semParams);
-	sem = Semaphore_create(0, &semParams, NULL);
-	if (!sem) {
+	Semaphore_Params_init(&convertValuesParams);
+	convertValues = Semaphore_create(0, &convertValuesParams, NULL);
+	if (!convertValues) {
 		System_abort("Failed to create semaphore");
 	}
 	/* Create I2C for usage */
@@ -317,13 +338,10 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     i2cMode = I2CMODE_MPU9250;
 
     while (1) {
-    	Semaphore_pend(sem, BIOS_WAIT_FOREVER);
+    	Semaphore_pend(convertValues, BIOS_WAIT_FOREVER);
 		System_printf("Converting values.\n");
 		switch (trackingMode) {
 		case TRACKING_SUN:
-			if (i2cMode != I2CMODE_NORMAL)
-				SwitchI2CMode();
-
 			Clock_stop(TMP007_Clock);
 			Clock_stop(OPT3001_Clock);
 
@@ -339,9 +357,6 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 			Clock_start(OPT3001_Clock);
 			break;
 		case TRACKING_FRESH_AIR:
-			if (i2cMode != I2CMODE_NORMAL)
-				SwitchI2CMode();
-
 			Clock_stop(BMP280_Clock);
 			BMP280_ConvertData();
 			AccumulateFreshAir();
@@ -349,8 +364,6 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 			Clock_start(BMP280_Clock);
 			break;
 		case TRACKING_PHYSICAL:
-			if (i2cMode != I2CMODE_MPU9250)
-				SwitchI2CMode();
 			Clock_stop(MPU9250_Clock);
 			AccumulatePhysicalActivity();
 			mpu9250_index = 0;
