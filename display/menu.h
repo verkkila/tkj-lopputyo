@@ -26,7 +26,7 @@
 #include "../aasigotchi.h"
 #include "../util/vec2f.h"
 
-extern aasigotchi_data *currentGotchi;
+extern aasigotchi_data currentGotchi;
 
 Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId);
 
@@ -51,6 +51,6 @@ Void DrawAirMenu(tContext *pContext);
 Void DrawPhysMenu(tContext *pContext);
 Void DrawSocialMenu(tContext *pContext);
 
-Void Menu_Start();
+Void Display_CreateTask();
 
 #endif /* DISPLAY_MENU_H_ */

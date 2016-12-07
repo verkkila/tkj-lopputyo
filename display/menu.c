@@ -58,26 +58,6 @@ const uint8_t imgdata_FreshAir[8] = {
 		0b00000000
 };
 
-const uint16_t imgdata_turha[16] = {
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000,
-		0b0000000000000000
-};
-
-
 uint32_t imgPalette[] = {
 		0xFFFFFF,
 		0x000000
@@ -144,38 +124,6 @@ Void Menu_StopRedrawing(void)
 	Clock_stop(redrawClock);
 }
 
-Void Menu_StartS(void)
-{
-	Sensors_StartTrackingSun();
-	Menu_StartRedrawing();
-}
-Void Menu_StartA(void)
-{
-	Sensors_StartTrackingFreshAir();
-	Menu_StartRedrawing();
-}
-Void Menu_StartP(void)
-{
-	Sensors_StartTrackingPhysical();
-	Menu_StartRedrawing();
-}
-
-Void Menu_StopS(void)
-{
-	Sensors_StopTrackingSun();
-	Menu_StopRedrawing();
-}
-Void Menu_StopA(void)
-{
-	Sensors_StopTrackingFreshAir();
-	Menu_StopRedrawing();
-}
-Void Menu_StopP(void)
-{
-	Sensors_StopTrackingPhysical();
-	Menu_StopRedrawing();
-}
-
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 {
 	unsigned char selectedOption = currentMenu->selectedOption;
@@ -195,11 +143,6 @@ static void Menu_NextState(void)
 		currentMenu->options[selectedOption].actions[fn]();
 		++fn;
 	}
-	/*
-	if (currentMenu->options[selectedOption].action != NULL) {
-		currentMenu->options[selectedOption].action();
-	}
-	*/
 	if (currentMenu->options[selectedOption].next != NULL) {
 		currentMenu = currentMenu->options[selectedOption].next;
 	}
@@ -224,9 +167,9 @@ Void DrawMainMenu(tContext *pContext)
 	}
 
 	GrLineDraw(pContext, 0, 58, 96, 58);
-	Display_print0(hDisplay, 8, 0, currentGotchi->name);
+	Display_print0(hDisplay, 8, 0, currentGotchi.name);
 	tImage test;
-	Menu_GetImageFromBitmap(&test, currentGotchi->image);
+	Menu_GetImageFromBitmap(&test, currentGotchi.image);
 	GrImageDraw(pContext, &test, 0, 9*8);
 }
 
@@ -235,18 +178,18 @@ Void DrawActivitiesMenu(tContext *pContext)
 	int i;
 	Display_print0(hDisplay, 0, 2, "Harrastus");
 
-	Display_print1(hDisplay, 8, 4, "%i", currentGotchi->a);
+	Display_print1(hDisplay, 8, 4, "%i", currentGotchi.a);
 	GrImageDraw(pContext, &img_Sun, 16, 8*8);
 
-	Display_print1(hDisplay, 9, 4, "%i", currentGotchi->r);
+	Display_print1(hDisplay, 9, 4, "%i", currentGotchi.r);
 	GrImageDraw(pContext, &img_FreshAir, 16, 9*8);
 
-	Display_print1(hDisplay, 10, 4, "%i", currentGotchi->l);
+	Display_print1(hDisplay, 10, 4, "%i", currentGotchi.l);
 	GrImageDraw(pContext, &img_Physical, 12, 10*8);
 
-	Display_print1(hDisplay, 11, 4, "%i", currentGotchi->s);
+	Display_print1(hDisplay, 11, 4, "%i", currentGotchi.s);
 	tImage test;
-	Menu_GetImageFromBitmap(&test, currentGotchi->image);
+	Menu_GetImageFromBitmap(&test, currentGotchi.image);
 	GrImageDraw(pContext, &test, 20, 10*8);
 
 	for (i = 0; i < currentMenu->numOptions; ++i) {
@@ -264,7 +207,7 @@ Void DrawSunMenu(tContext *pContext)
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
-	Display_print1(hDisplay, 6, 7, "%i", currentGotchi->a);
+	Display_print1(hDisplay, 6, 7, "%i", currentGotchi.a);
 	GrCircleDraw(pContext, 48, 48, 20);
 	for (i = 0; i < 8; ++i) {
 		int lengthReal = length;
@@ -289,7 +232,7 @@ Void DrawAirMenu(tContext *pContext)
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
-	Display_print1(hDisplay, 1, 7, "%i", currentGotchi->r);
+	Display_print1(hDisplay, 1, 7, "%i", currentGotchi.r);
 
 	GrCircleDraw(pContext, 24, 48, 5);
 	for (i = 0; i < 3; ++i) {
@@ -314,19 +257,6 @@ Void DrawAirMenu(tContext *pContext)
 	offset += 0.20943;
 	if (offset >= 2.0943)
 		offset = 0;
-	/*
-	static int lineOffs = 0;
-	for (i = 0; i < 2; ++i) {
-		int xLeft = 24 + (i * 5) + lineOffs;
-		int yLeft = 30 + (i * 20);
-		int xRight = 34 + (i * 5) + lineOffs;
-		int yRight = 30 + (i * 20);
-		GrLineDraw(pContext, xLeft, yLeft, xRight, yRight);
-	}
-	++lineOffs;
-	if (lineOffs > 50)
-		lineOffs = 0;
-	*/
 }
 
 Void DrawPhysMenu(tContext *pContext)
@@ -336,7 +266,7 @@ Void DrawPhysMenu(tContext *pContext)
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
-	Display_print1(hDisplay, 6, 3, "%i", currentGotchi->l);
+	Display_print1(hDisplay, 6, 3, "%i", currentGotchi.l);
 
 	static int offset = 0;
 	GrLineDraw(pContext, 0, 75, 96, 75);
@@ -356,7 +286,7 @@ Void DrawSocialMenu(tContext *pContext)
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
 	}
-	Display_print1(hDisplay, 6, 7, "%i", currentGotchi->s);
+	Display_print1(hDisplay, 6, 7, "%i", currentGotchi.s);
 
 	GrCircleDraw(pContext, 48, 48, 30);
 	GrLineDraw(pContext, 40, 38, 40, 43);
@@ -431,9 +361,3 @@ Void Display_CreateTask()
 		System_abort("Failed to create display task!");
 	}
 }
-
-Void Menu_Start()
-{
-	Display_CreateTask();
-}
-

@@ -21,9 +21,9 @@
 #include "comm_lib.h"
 #include "../aasigotchi.h"
 
-extern aasigotchi_data *currentGotchi;
+extern aasigotchi_data currentGotchi;
 
-void Comm_Start(void);
+void Comm_CreateTask(void);
 void Comm_CreateNewGotchi(void);
 void Comm_ParseReturnMsg(void);
 void Comm_FetchGotchi(void);

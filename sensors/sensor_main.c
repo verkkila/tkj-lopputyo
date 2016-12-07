@@ -7,17 +7,15 @@
 
 #include <sensors/sensor_main.h>
 
-#define I2CMODE_NORMAL 0
-#define I2CMODE_MPU9250 1
-
-#define SENSORS_STACKSIZE 2048
+#define SENSORS_STACKSIZE 3072
 Char sensorStack[SENSORS_STACKSIZE];
 
+I2C_Handle hI2C;
 I2C_Handle *pI2C = NULL;
 I2C_Handle *pMpuI2C = NULL;
 I2C_Params i2cParams;
 I2C_Params i2cMpuParams;
-static int i2cMode = -1;
+//static int i2cMode = I2CMODE_NONE;
 
 static PIN_Handle hMpuPin;
 static PIN_State sMpuPin;
@@ -43,9 +41,7 @@ int bmp280_index = 0;
 int opt3001_index = 0;
 int mpu9250_index = 0;
 
-int isTrackingSun = 0;
-int isTrackingFreshAir = 0;
-int isTrackingPhysical = 0;
+//int trackingMode = TRACKING_NONE;
 
 Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
@@ -70,23 +66,22 @@ Void I2C_MPU9250_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool trans
 		MPU9250_TransferComplete(msg);
 	else {
 		System_printf("MPU9250 I2C failed.\n");
+		System_flush();
 	}
-	System_flush();
 }
 
 static void SwitchI2CMode()
 {
-	I2C_Handle temp;
 	if (i2cMode == I2CMODE_NORMAL) {
 		I2C_close(*pI2C);
-		temp = I2C_open(Board_I2C, &i2cMpuParams);
-		*pMpuI2C = temp;
-		/*if temp == null*/
+		hI2C = I2C_open(Board_I2C, &i2cMpuParams);
+		*pMpuI2C = hI2C;
 	} else if (i2cMode == I2CMODE_MPU9250) {
 		I2C_close(*pMpuI2C);
-		temp = I2C_open(Board_I2C0, &i2cParams);
-		*pI2C = temp;
-		/*if temp == null*/
+		hI2C = I2C_open(Board_I2C0, &i2cParams);
+		*pI2C = hI2C;
+	} else {
+		System_abort("Attempted to switch I2C modes with I2CMODE_NONE");
 	}
 }
 
@@ -139,7 +134,7 @@ static void AccumulateSun(void)
 		}
 	}
 	temp_a *= 0.001f;
-	currentGotchi->a += floor(temp_a);
+	currentGotchi.a += floor(temp_a);
 }
 
 void Sensors_StartTrackingSun(void)
@@ -147,14 +142,14 @@ void Sensors_StartTrackingSun(void)
 	Clock_start(TMP007_Clock);
 	Clock_start(OPT3001_Clock);
 	Clock_start(Master_Clock);
-	isTrackingSun = 1;
+	trackingMode = TRACKING_SUN;
 	System_printf("Started tracking sun.\n");
 	System_flush();
 }
 
 void Sensors_StopTrackingSun(void)
 {
-	isTrackingSun = 0;
+	trackingMode = TRACKING_NONE;
 	TMP007_ConvertData();
 	OPT3001_ConvertData();
 	AccumulateSun();
@@ -176,35 +171,25 @@ static void AccumulateFreshAir(void)
 		}
 	}
 	temp_r *= 0.001f;
-	currentGotchi->r += floor(temp_r);
+	currentGotchi.r += floor(temp_r);
 }
 
 void Sensors_StartTrackingFreshAir(void)
 {
 	Clock_start(BMP280_Clock);
 	Clock_start(Master_Clock);
-	isTrackingFreshAir = 1;
+	trackingMode = TRACKING_FRESH_AIR;
+	System_printf("Started tracking fresh air.\n");
 }
 
 void Sensors_StopTrackingFreshAir(void)
 {
-	isTrackingFreshAir = 0;
+	trackingMode = TRACKING_NONE;
 	BMP280_ConvertData();
 	AccumulateFreshAir();
 	Clock_stop(BMP280_Clock);
 	Clock_stop(Master_Clock);
-}
-
-void Sensors_StartTrackingPhysical(void)
-{
-	isTrackingPhysical = 1;
-	Clock_start(Master_Clock);
-}
-
-void Sensors_StopTrackingPhysical(void)
-{
-	isTrackingPhysical = 0;
-	Clock_stop(Master_Clock);
+	System_printf("Stopped tracking fresh air.\n");
 }
 
 static void AccumulatePhysicalActivity(void)
@@ -218,7 +203,24 @@ static void AccumulatePhysicalActivity(void)
 		}
 	}
 	temp_l *= 0.001f;
-	currentGotchi->l += floor(temp_l);
+	currentGotchi.l += floor(temp_l);
+}
+
+void Sensors_StartTrackingPhysical(void)
+{
+	trackingMode = TRACKING_PHYSICAL;
+	Clock_start(MPU9250_Clock);
+	Clock_start(Master_Clock);
+	System_printf("Started tracking physical.\n");
+}
+
+void Sensors_StopTrackingPhysical(void)
+{
+	trackingMode = TRACKING_PHYSICAL;
+	AccumulatePhysicalActivity();
+	Clock_stop(MPU9250_Clock);
+	Clock_stop(Master_Clock);
+	System_printf("Stopped tracking physical.\n");
 }
 
 Void Sensors_ReadAll(UArg arg0, UArg arg1)
@@ -291,6 +293,11 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     Event_pend(g_hEvent, SENSOR_SETUP_COMPLETE, Event_Id_NONE, BIOS_WAIT_FOREVER);
     I2C_close(i2c);
 
+    hMpuPin = PIN_open(&sMpuPin, MpuPinConfig);
+    if (hMpuPin == NULL) {
+    	System_abort("...");
+    }
+
     I2C_Params_init(&i2cMpuParams);
     i2cMpuParams.bitRate = I2C_400kHz;
     i2cMpuParams.transferMode = I2C_MODE_CALLBACK;
@@ -312,7 +319,8 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     while (1) {
     	Semaphore_pend(sem, BIOS_WAIT_FOREVER);
 		System_printf("Converting values.\n");
-		if (isTrackingSun) {
+		switch (trackingMode) {
+		case TRACKING_SUN:
 			if (i2cMode != I2CMODE_NORMAL)
 				SwitchI2CMode();
 
@@ -329,7 +337,8 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 
 			Clock_start(TMP007_Clock);
 			Clock_start(OPT3001_Clock);
-		} else if (isTrackingFreshAir) {
+			break;
+		case TRACKING_FRESH_AIR:
 			if (i2cMode != I2CMODE_NORMAL)
 				SwitchI2CMode();
 
@@ -338,18 +347,24 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 			AccumulateFreshAir();
 			bmp280_index = 0;
 			Clock_start(BMP280_Clock);
-		} else if (isTrackingPhysical) {
+			break;
+		case TRACKING_PHYSICAL:
 			if (i2cMode != I2CMODE_MPU9250)
 				SwitchI2CMode();
 			Clock_stop(MPU9250_Clock);
 			AccumulatePhysicalActivity();
 			mpu9250_index = 0;
 			Clock_start(MPU9250_Clock);
+			break;
+		case TRACKING_NONE:
+		default:
+			break;
 		}
 		Event_post(g_hEvent, DATA_CONVERSION_COMPLETE);
 		System_flush();
     }
 }
+
 
 Void Sensors_CreateTask(void)
 {
@@ -359,15 +374,10 @@ Void Sensors_CreateTask(void)
 	Task_Params_init(&params);
 	params.stackSize = SENSORS_STACKSIZE;
 	params.stack = &sensorStack;
-	params.priority = 1;
+	params.priority = 3;
 
 	task = Task_create(Sensors_ReadAll, &params, NULL);
 	if (task == NULL) {
 		System_abort("Failed to create sensor task!");
 	}
-}
-
-Void Sensors_Start(void)
-{
-	Sensors_CreateTask();
 }

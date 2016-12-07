@@ -29,7 +29,7 @@
 
 #include "aasigotchi.h"
 
-aasigotchi_data testiGotchi = {
+aasigotchi_data currentGotchi = {
 	.name = "testi",
 	.image = {
 			0b00100100,
@@ -46,8 +46,6 @@ aasigotchi_data testiGotchi = {
 	.r = 30,
 	.s = 40,
 };
-
-aasigotchi_data *currentGotchi = NULL;
 
 /*Globals*/
 Event_Handle g_hEvent = NULL;
@@ -130,11 +128,10 @@ Int main(void)
     }
 
     /* Task */
-    Sensors_Start();
-    Menu_Start();
-    Comm_Start();
-
-    currentGotchi = &testiGotchi;
+    Init6LoWPAN();
+    Display_CreateTask();
+    Comm_CreateTask();
+    Sensors_CreateTask();
 
     System_printf("Ready!\n");
     System_flush();

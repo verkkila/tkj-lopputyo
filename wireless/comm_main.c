@@ -19,23 +19,23 @@ int lastMsgParsed = 1;
 
 void Comm_CreateNewGotchi(void)
 {
-	sprintf(payload, "Uusi:%i,%i,%i,%i,%i,%i,%i,%i,%s\n", currentGotchi->image[0],
-			currentGotchi->image[1],
-			currentGotchi->image[2],
-			currentGotchi->image[3],
-			currentGotchi->image[4],
-			currentGotchi->image[5],
-			currentGotchi->image[6],
-			currentGotchi->image[7],
-			currentGotchi->name);
-	//Semaphore_post(sem);
+	sprintf(payload, "Uusi:%i,%i,%i,%i,%i,%i,%i,%i,%s\n", currentGotchi.image[0],
+			currentGotchi.image[1],
+			currentGotchi.image[2],
+			currentGotchi.image[3],
+			currentGotchi.image[4],
+			currentGotchi.image[5],
+			currentGotchi.image[6],
+			currentGotchi.image[7],
+			currentGotchi.name);
+	Semaphore_post(sem);
 	shouldSend = 1;
 }
 
 void Comm_FetchGotchi(void)
 {
-	sprintf(payload, "Hae:%s\n", currentGotchi->name);
-	//Semaphore_post(sem);
+	sprintf(payload, "Hae:%s\n", currentGotchi.name);
+	Semaphore_post(sem);
 	shouldSend = 1;
 }
 
@@ -44,9 +44,9 @@ void Comm_ParseReturnMsg(void)
 	char result[16];
 	sscanf(payload, "%s", result);
 	if (!strcmp(result, "OK")) {
-		System_printf("Viesti ok");
+		System_printf("Message OK");
 	} else if (!strcmp(result, "Virhe")) {
-		System_printf("Viestissä virhe");
+		System_printf("Error in received message");
 	}
 	System_flush();
 }
@@ -54,6 +54,7 @@ void Comm_ParseReturnMsg(void)
 Void Comm_Update(UArg arg0, UArg arg1)
 {
 	uint16_t senderAddr;
+
 	Semaphore_Params semParams;
 	Semaphore_Params_init(&semParams);
 	sem = Semaphore_create(0, &semParams, NULL);
@@ -67,14 +68,17 @@ Void Comm_Update(UArg arg0, UArg arg1)
     }
 
 	while (1) {
-		//Semaphore_pend(sem, BIOS_WAIT_FOREVER);
+		if (lastMsgParsed)
+			Semaphore_pend(sem, BIOS_WAIT_FOREVER);
 		if (GetTXFlag() == false && shouldSend == 1 && lastMsgParsed == 1) {
 			Send6LoWPAN(IEEE80154_SINK_ADDR, (uint8_t*)payload, strlen(payload));
 			StartReceive6LoWPAN();
 			shouldSend = 0;
+			lastMsgParsed = 0;
 		} else if (GetRXFlag() == true) {
 			if (Receive6LoWPAN(&senderAddr, payload, PAYLOAD_LENGTH) != -1) {
 				Comm_ParseReturnMsg();
+				lastMsgParsed = 1;
 			}
 		}
 	}
@@ -94,11 +98,4 @@ Void Comm_CreateTask(void)
 	if (task == NULL) {
 		System_abort("Failed to create comm task!");
 	}
-}
-
-
-void Comm_Start(void)
-{
-	Init6LoWPAN();
-	Comm_CreateTask();
 }

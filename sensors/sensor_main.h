@@ -34,9 +34,24 @@
 #include "tmp007.h"
 
 extern Event_Handle g_hEvent;
-extern aasigotchi_data *currentGotchi;
+extern aasigotchi_data currentGotchi;
 
-Void Sensors_Start(void);
+enum I2CMODE {
+	I2CMODE_NONE = 0,
+	I2CMODE_NORMAL,
+	I2CMODE_MPU9250
+};
+enum I2CMODE i2cMode;
+
+enum TRACKING_MODE {
+	TRACKING_NONE,
+	TRACKING_SUN,
+	TRACKING_FRESH_AIR,
+	TRACKING_PHYSICAL,
+};
+enum TRACKING_MODE trackingMode;
+
+Void Sensors_CreateTask(void);
 
 void Sensors_StartTrackingSun(void);
 void Sensors_StartTrackingFreshAir(void);
