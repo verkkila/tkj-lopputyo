@@ -76,7 +76,7 @@ Menu mainMenu = {
 	.drawFxn = DrawMainMenu,
 	.options = {
 			{NULL, {Comm_CreateNewGotchi, NULL, NULL}, "Luo uusi"},
-			{NULL, {NULL, NULL, NULL}, "Hae/vie"},
+			{NULL, {Comm_FetchOrReturnGotchi, NULL, NULL}, "Hae/vie"},
 			{&activitiesMenu, {NULL, NULL, NULL}, "Harrasta"},
 			{NULL, {NULL, NULL, NULL}, "Sammuta"},
 			{NULL, {NULL, NULL, NULL}, ""}

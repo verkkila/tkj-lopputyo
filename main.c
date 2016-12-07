@@ -45,6 +45,7 @@ aasigotchi_data currentGotchi = {
 	.a = 20,
 	.r = 30,
 	.s = 40,
+	.active = true
 };
 
 /*Globals*/
@@ -80,6 +81,12 @@ PIN_Config cLed[] = {
     Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
     PIN_TERMINATE
 };
+
+void ResetGotchi()
+{
+	memset(&currentGotchi, 0, sizeof(aasigotchi_data));
+	currentGotchi.active = false;
+}
 
 /* Handle power button */
 Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
@@ -131,7 +138,7 @@ Int main(void)
     Init6LoWPAN();
     Display_CreateTask();
     Comm_CreateTask();
-    Sensors_CreateTask();
+    //Sensors_CreateTask();
 
     System_printf("Ready!\n");
     System_flush();

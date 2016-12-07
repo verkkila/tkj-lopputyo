@@ -23,8 +23,11 @@
 
 extern aasigotchi_data currentGotchi;
 
+typedef int (*ReturnMsgParserFxn)(void);
+
 void Comm_CreateTask(void);
 void Comm_CreateNewGotchi(void);
+void Comm_FetchOrReturnGotchi(void);
 void Comm_ParseReturnMsg(void);
 void Comm_FetchGotchi(void);
 

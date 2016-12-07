@@ -165,12 +165,18 @@ Void DrawMainMenu(tContext *pContext)
 			x++;
 		Display_print0(hDisplay, i+3, x, currentMenu->options[i].text);
 	}
-
-	GrLineDraw(pContext, 0, 58, 96, 58);
-	Display_print0(hDisplay, 8, 0, currentGotchi.name);
-	tImage test;
-	Menu_GetImageFromBitmap(&test, currentGotchi.image);
-	GrImageDraw(pContext, &test, 0, 9*8);
+	if (currentGotchi.active) {
+		GrLineDraw(pContext, 0, 58, 96, 58);
+		Display_print0(hDisplay, 8, 0, currentGotchi.name);
+		tImage test;
+		Menu_GetImageFromBitmap(&test, currentGotchi.image);
+		GrImageDraw(pContext, &test, 0, 9*8);
+	} else {
+		GrLineDraw(pContext, 0, 58, 96, 58);
+		Display_print0(hDisplay, 8, 0, "Ei aasia");
+		GrLineDraw(pContext, 0, 9*8, 8, 9*8+8);
+		GrLineDraw(pContext, 0, 9*8+8, 8, 9*8);
+	}
 }
 
 Void DrawActivitiesMenu(tContext *pContext)

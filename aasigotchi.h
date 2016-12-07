@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+void ResetGotchi();
+
 typedef struct {
 	char name[17];
 	const uint8_t image[8];
@@ -17,6 +19,7 @@ typedef struct {
 	uint32_t a;
 	uint32_t r;
 	uint32_t s;
+	Bool active;
 } aasigotchi_data;
 
 
