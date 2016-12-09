@@ -8,6 +8,8 @@
 #ifndef UTIL_VEC3F_H_
 #define UTIL_VEC3F_H_
 
+#include <math.h>
+
 typedef struct {
 	float x, y, z;
 } vec3f;

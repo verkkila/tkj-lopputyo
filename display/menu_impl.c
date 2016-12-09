@@ -16,8 +16,8 @@ Menu sunMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawSunMenu,
 	.options = {
-			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingSun, NULL}, "Takaisin"},
-			{NULL, {NULL, NULL, NULL}, ""}
+			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingSun, Menu_StartDecayingAttributes, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -27,8 +27,8 @@ Menu airMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawAirMenu,
 	.options = {
-			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingFreshAir, NULL}, "Takaisin"},
-			{NULL, {NULL, NULL, NULL}, ""}
+			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingFreshAir, Menu_StartDecayingAttributes, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -38,19 +38,20 @@ Menu physMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawPhysMenu,
 	.options = {
-			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingPhysical, NULL}, "Takaisin"},
-			{NULL, {NULL, NULL, NULL}, ""}
+			{&activitiesMenu, {Menu_StopRedrawing, Sensors_StopTrackingPhysical, Menu_StartDecayingAttributes, NULL}, "Takaisin"},
+			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };
 
 Menu socialMenu = {
 	.id = MENU_ACT_SOCIAL,
-	.numOptions = 1,
+	.numOptions = 2,
 	.selectedOption = 0,
 	.drawFxn = DrawSocialMenu,
 	.options = {
-			{&activitiesMenu, {NULL, NULL, NULL}, "Takaisin"},
-			{NULL, {NULL, NULL, NULL}, ""}
+			{&activitiesMenu, {Comm_StopTrackingGreetings, Menu_StopRedrawing, Menu_StartDecayingAttributes, NULL}, "Takaisin"},
+			{NULL, {Comm_SendGreeting, NULL, NULL, NULL}, "Tervehdi"},
+			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -60,12 +61,12 @@ Menu activitiesMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawActivitiesMenu,
 	.options = {
-			{&mainMenu, {NULL, NULL, NULL}, "Takaisin"},
-			{&sunMenu, {Menu_StartRedrawing, Sensors_StartTrackingSun, NULL}, "Aurinko"},
-			{&airMenu, {Menu_StartRedrawing, Sensors_StartTrackingFreshAir, NULL}, "Raikas ilma"},
-			{&physMenu, {Menu_StartRedrawing, Sensors_StartTrackingPhysical, NULL}, "Liikunta"},
-			{&socialMenu, {NULL, NULL, NULL}, "Kaverit"},
-			{NULL, {NULL, NULL, NULL}, ""}
+			{&mainMenu, {NULL, NULL, NULL, NULL}, "Takaisin"},
+			{&sunMenu, {Menu_StartRedrawing, Sensors_StartTrackingSun, Menu_StopDecayingAttributes, NULL}, "Aurinko"},
+			{&airMenu, {Menu_StartRedrawing, Sensors_StartTrackingFreshAir, Menu_StopDecayingAttributes, NULL}, "Raikas ilma"},
+			{&physMenu, {Menu_StartRedrawing, Sensors_StartTrackingPhysical, Menu_StopDecayingAttributes, NULL}, "Liikunta"},
+			{&socialMenu, {Menu_StopDecayingAttributes, NULL, NULL, NULL}, "Sosialisoi"},
+			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };
 
@@ -75,11 +76,11 @@ Menu mainMenu = {
 	.selectedOption = 0,
 	.drawFxn = DrawMainMenu,
 	.options = {
-			{NULL, {Comm_CreateNewGotchi, NULL, NULL}, "Luo uusi"},
-			{NULL, {Comm_FetchOrReturnGotchi, NULL, NULL}, "Hae/vie"},
-			{&activitiesMenu, {NULL, NULL, NULL}, "Harrasta"},
-			{NULL, {NULL, NULL, NULL}, "Sammuta"},
-			{NULL, {NULL, NULL, NULL}, ""}
+			{NULL, {Comm_CreateNewGotchi, NULL, NULL, NULL}, "Luo uusi"},
+			{NULL, {Comm_FetchOrReturnGotchi, NULL, NULL, NULL}, "Hae/vie"},
+			{&activitiesMenu, {NULL, NULL, NULL, NULL}, "Harrasta"},
+			{NULL, {NULL, NULL, NULL, NULL}, "Sammuta"},
+			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };
 

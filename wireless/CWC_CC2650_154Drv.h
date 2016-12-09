@@ -13,6 +13,7 @@
 
 //INCLUDES
 #include <xdc/std.h> // Teemu
+#include <xdc/runtime/System.h>
 #include <inc/hw_types.h>
 #include <driverlib/rf_data_entry.h>
 #include <driverlib/interrupt.h>

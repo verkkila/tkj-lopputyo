@@ -27,17 +27,25 @@ int16_t  dig_P8;
 int16_t  dig_P9;
 int32_t	 t_fine = 0;
 
-static I2C_Transaction readData;
+static char txBuffer[5];
+static char rxBuffer[24];
+
+static I2C_Transaction readData = {
+	.slaveAddress = Board_BMP280_ADDR,
+	.writeBuf = txBuffer,
+	.writeCount = 1,
+	.readBuf = rxBuffer,
+	.readCount = 6
+};
 static I2C_Transaction writeConfig;
 static I2C_Transaction writeMeas;
 static I2C_Transaction writeTrimming;
-static char txBuffer[5];
-static char rxBuffer[24];
+
 
 static uint32_t rawData_Pres[BMP280_NUM_VALUES];
 static uint32_t rawData_Temp[BMP280_NUM_VALUES];
 float BMP280_presData[BMP280_NUM_VALUES];
-//int bmp280_index;
+//int bmp280_numData;
 
 void BMP280_SetTrimming(char *v)
 {
@@ -121,33 +129,25 @@ void BMP280_Setup(I2C_Handle *i2c)
 	writeTrimming.readBuf = rxBuffer;
 	writeTrimming.readCount = 24;
 
-	I2C_transfer(*pI2C, &writeConfig);
-	I2C_transfer(*pI2C, &writeMeas);
-	I2C_transfer(*pI2C, &writeTrimming);
+	I2C_transfer(*i2c, &writeConfig);
+	I2C_transfer(*i2c, &writeMeas);
+	I2C_transfer(*i2c, &writeTrimming);
 }
 
 static void BMP280_AddData(char *buf)
 {
-	//System_printf("BMP280: AddData index: %i tick: %i\n", bmp280_index, Clock_getTicks() * Clock_tickPeriod / 1000);
-	System_flush();
-	if (bmp280_index >= BMP280_NUM_VALUES) {
+	if (bmp280_numData >= BMP280_NUM_VALUES) {
 		System_printf("BMP280 raw data buffers are full, waiting for conversion.\n");
 	} else {
-		rawData_Pres[bmp280_index] = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
-		rawData_Temp[bmp280_index] = (buf[3] << 12) | (buf[4] << 4) | (buf[5] >> 4);
-		++bmp280_index;
+		rawData_Pres[bmp280_numData] = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
+		rawData_Temp[bmp280_numData] = (buf[3] << 12) | (buf[4] << 4) | (buf[5] >> 4);
+		++bmp280_numData;
 	}
 }
 
 void BMP280_Read()
 {
 	txBuffer[0] = BMP280_REG_PRES;
-	readData.slaveAddress = Board_BMP280_ADDR;
-	readData.writeBuf = txBuffer;
-	readData.writeCount = 1;
-	readData.readBuf = rxBuffer;
-	readData.readCount = 6;
-
 	I2C_transfer(*pI2C, &readData);
 }
 
@@ -171,13 +171,13 @@ void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer)
 		if (transfer) {
 			System_printf("BMP280: Trimming write ok!\n");
 			BMP280_SetTrimming(msg->readBuf);
-			Event_post(g_hEvent, SENSOR_SETUP_COMPLETE);
+			Event_post(globalEvents, SENSOR_SETUP_COMPLETE);
 		} else
 			System_abort("BMP280: Trimming write failed!\n");
 		break;
 	case BMP280_REG_PRES:
 		BMP280_AddData(msg->readBuf);
-		Event_post(g_hEvent, BMP280_READ_COMPLETE);
+		//Event_post(globalEvents, BMP280_READ_COMPLETE);
 		break;
 	default:
 		break;
@@ -188,12 +188,12 @@ void BMP280_ConvertData()
 {
 	int i;
 
-	//System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_index, BMP280_NUM_VALUES);
-	for (i = 0; i < bmp280_index; ++i) {
+	//System_printf("BMP280: Starting conversion, index: (%i/%i)\n", bmp280_numData, BMP280_NUM_VALUES);
+	for (i = 0; i < bmp280_numData; ++i) {
 		BMP280_ConvertTemperature(rawData_Temp[i]);
 		BMP280_presData[i] = BMP280_ConvertPressure(rawData_Pres[i]);
 	}
-	//bmp280_index = 0;
+	//bmp280_numData = 0;
 	//System_printf("BMP280 conversion complete.\n");
 }
 

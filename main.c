@@ -49,7 +49,7 @@ aasigotchi_data currentGotchi = {
 };
 
 /*Globals*/
-Event_Handle g_hEvent = NULL;
+Event_Handle globalEvents = NULL;
 
 /* Display */
 Display_Handle hDisplay;
@@ -129,20 +129,20 @@ Int main(void)
         System_abort("Error initializing LED pin\n");
     }
 
-    g_hEvent = Event_create(NULL, NULL);
-    if (g_hEvent == NULL) {
+    globalEvents = Event_create(NULL, NULL);
+    if (globalEvents == NULL) {
     	System_abort("Event create failed.\n");
     }
 
     /* Task */
-    Init6LoWPAN();
+
     Display_CreateTask();
-    Comm_CreateTask();
+    //Comm_CreateTask();
     Sensors_CreateTask();
 
     System_printf("Ready!\n");
     System_flush();
-    
+
     /* Start BIOS */
     BIOS_start();
 

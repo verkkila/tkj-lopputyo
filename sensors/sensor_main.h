@@ -33,7 +33,7 @@
 #include "opt3001.h"
 #include "tmp007.h"
 
-extern Event_Handle g_hEvent;
+extern Event_Handle globalEvents;
 extern aasigotchi_data currentGotchi;
 
 enum I2CMODE {

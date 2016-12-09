@@ -15,8 +15,8 @@
 
 #include "menu.h"
 
-#define MAX_OPTIONS 8
-#define MAX_CALLBACKS 3
+#define MAX_OPTIONS 6
+#define MAX_CALLBACKS 4
 
 typedef Void(*DrawMenuFxn)(tContext*);
 typedef void(*MenuOptionFxn)(void);

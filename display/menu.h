@@ -33,13 +33,8 @@ Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId);
 Void Menu_StartRedrawing(void);
 Void Menu_StopRedrawing(void);
 
-Void Menu_StartS(void);
-Void Menu_StartA(void);
-Void Menu_StartP(void);
-
-Void Menu_StopS(void);
-Void Menu_StopA(void);
-Void Menu_StopP(void);
+Void Menu_StartDecayingAttributes(void);
+Void Menu_StopDecayingAttributes(void);
 
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id);
 Void Menu_OnButton1(PIN_Handle handle, PIN_Id id);

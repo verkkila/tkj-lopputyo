@@ -18,7 +18,7 @@ static char rxBuffer[4];
 
 static uint16_t rawData[OPT3001_NUM_VALUES];
 float OPT3001_data[OPT3001_NUM_VALUES];
-//int opt3001_index;
+//int opt3001_numData;
 
 void OPT3001_Setup(I2C_Handle *i2c)
 {
@@ -31,7 +31,7 @@ void OPT3001_Setup(I2C_Handle *i2c)
     writeConfig.readBuf = NULL;
     writeConfig.readCount = 0;
 
-    I2C_transfer(*pI2C, &writeConfig);
+    I2C_transfer(*i2c, &writeConfig);
 }
 
 static void OPT3001_readDataState(char *buf)
@@ -44,11 +44,11 @@ static void OPT3001_readDataState(char *buf)
 static void OPT3001_AddData(char *buf)
 {
 	System_flush();
-	if (opt3001_index >= OPT3001_NUM_VALUES) {
+	if (opt3001_numData >= OPT3001_NUM_VALUES) {
 		System_printf("OPT3001 raw data buffer is full, waiting for conversion.\n");
 	} else {
-		rawData[opt3001_index] = (buf[0] << 8) | buf[1];
-		++opt3001_index;
+		rawData[opt3001_numData] = (buf[0] << 8) | buf[1];
+		++opt3001_numData;
 	}
 }
 
@@ -103,11 +103,11 @@ void OPT3001_ConvertData()
 {
 	int i;
 
-	//System_printf("OPT3001: Starting conversion, index: (%i/%i)\n", opt3001_index, OPT3001_NUM_VALUES);
-	for (i = 0; i < opt3001_index; ++i) {
+	//System_printf("OPT3001: Starting conversion, index: (%i/%i)\n", opt3001_numData, OPT3001_NUM_VALUES);
+	for (i = 0; i < opt3001_numData; ++i) {
 		OPT3001_data[i] = OPT3001_ConvertLuminosity(rawData[i]);
 	}
-	//opt3001_index = 0;
+	//opt3001_numData = 0;
  	//System_printf("OPT3001 conversion complete.\n");
 }
 

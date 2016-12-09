@@ -91,7 +91,7 @@ float SelfTest[6];
 static uint8_t txBuffer[2];
 static uint8_t rawData[14];
 
-static const int asdasd = 0xABABABAB;
+static const int readAccelTransaction = 0xABABABAB;
 
 static I2C_Transaction readAcceleration = {
 		.slaveAddress = Board_MPU9250_ADDR,
@@ -99,7 +99,7 @@ static I2C_Transaction readAcceleration = {
 		.writeCount = 1,
 		.readBuf = rawData,
 		.readCount = 6,
-		.arg = &asdasd
+		.arg = &readAccelTransaction
 };
 static I2C_Transaction read_i2cTransaction;
 static I2C_Transaction write_i2cTransaction;
@@ -108,11 +108,10 @@ static I2C_Transaction write_i2cTransaction;
 void MPU9250_TransferComplete(I2C_Transaction *msg)
 {
 	int16_t data[7];
-	uint8_t reg = *(uint8_t*)msg->writeBuf;
 	vec3f accel;
 
 	Semaphore_post(i2cComplete);
-	if (*(int*)(msg->arg) == 0xABABABAB) {
+	if (*(int*)(msg->arg) == readAccelTransaction) {
 		data[0] = (rawData[0] << 8) | rawData[1];
 		data[1] = (rawData[2] << 8) | rawData[3];
 		data[2] = (rawData[4] << 8) | rawData[5];
@@ -139,12 +138,12 @@ void MPU9250_TransferComplete(I2C_Transaction *msg)
 
 void MPU9250_AddData(vec3f *a)
 {
-	if (mpu9250_index >= MPU9250_NUM_VALUES) {
+	if (mpu9250_numData >= MPU9250_NUM_VALUES) {
 		System_printf("MPU9250 is full.\n");
-		mpu9250_index = MPU9250_NUM_VALUES;
+		mpu9250_numData = MPU9250_NUM_VALUES;
 	} else {
-		MPU9250_Data[mpu9250_index] = *a;
-		++mpu9250_index;
+		MPU9250_Data[mpu9250_numData] = *a;
+		++mpu9250_numData;
 	}
 }
 

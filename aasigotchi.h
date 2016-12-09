@@ -14,7 +14,7 @@ void ResetGotchi();
 
 typedef struct {
 	char name[17];
-	const uint8_t image[8];
+	uint8_t image[8];
 	uint32_t l;
 	uint32_t a;
 	uint32_t r;

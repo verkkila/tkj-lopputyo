@@ -13,6 +13,7 @@ Char displayStack[DISPLAY_STACKSIZE];
 Display_Handle hDisplay;
 Menu *currentMenu = NULL;
 Clock_Handle redrawClock = NULL;
+Clock_Handle decayClock = NULL;
 
 const uint8_t imgdata_Gotchi[8] = {
 		0b00100100,
@@ -58,6 +59,17 @@ const uint8_t imgdata_FreshAir[8] = {
 		0b00000000
 };
 
+const uint8_t imgdata_Social[8] = {
+		0b00000000,
+		0b00000000,
+		0b00100100,
+		0b00100100,
+		0b00000000,
+		0b10000001,
+		0b01111110,
+		0b00000000
+};
+
 uint32_t imgPalette[] = {
 		0xFFFFFF,
 		0x000000
@@ -99,6 +111,15 @@ const tImage img_FreshAir = {
     .pPixel = imgdata_FreshAir
 };
 
+const tImage img_Social = {
+	.BPP = IMAGE_FMT_1BPP_UNCOMP,
+	.NumColors = 2,
+	.XSize = 1,
+	.YSize = 8,
+	.pPalette = imgPalette,
+	.pPixel = imgdata_Social
+};
+
 void Menu_GetImageFromBitmap(tImage *img, const uint8_t *bitmap)
 {
 	img->BPP = IMAGE_FMT_1BPP_UNCOMP;
@@ -111,7 +132,27 @@ void Menu_GetImageFromBitmap(tImage *img, const uint8_t *bitmap)
 
 Void Menu_RedrawTick(UArg arg)
 {
-	Event_post(g_hEvent, UPDATE_SCREEN);
+	Event_post(globalEvents, UPDATE_SCREEN);
+}
+
+Void Menu_DecayAttributes(UArg arg)
+{
+	if (currentGotchi.active) {
+		if (currentGotchi.a > 0) --currentGotchi.a;
+		if (currentGotchi.r > 0) --currentGotchi.r;
+		if (currentGotchi.l > 0) --currentGotchi.l;
+		if (currentGotchi.s > 0) --currentGotchi.s;
+	}
+}
+
+Void Menu_StartDecayingAttributes(void)
+{
+	Clock_start(decayClock);
+}
+
+Void Menu_StopDecayingAttributes(void)
+{
+	Clock_stop(decayClock);
 }
 
 Void Menu_StartRedrawing(void)
@@ -132,7 +173,7 @@ Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 	} else {
 		currentMenu->selectedOption = 0;
 	}
-	Event_post(g_hEvent, BUTTON_PRESSED);
+	Event_post(globalEvents, BUTTON_PRESSED);
 }
 
 static void Menu_NextState(void)
@@ -151,7 +192,7 @@ static void Menu_NextState(void)
 Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
 {
 	Menu_NextState();
-	Event_post(g_hEvent, BUTTON_PRESSED);
+	Event_post(globalEvents, BUTTON_PRESSED);
 }
 
 Void DrawMainMenu(tContext *pContext)
@@ -191,12 +232,13 @@ Void DrawActivitiesMenu(tContext *pContext)
 	GrImageDraw(pContext, &img_FreshAir, 16, 9*8);
 
 	Display_print1(hDisplay, 10, 4, "%i", currentGotchi.l);
-	GrImageDraw(pContext, &img_Physical, 12, 10*8);
-
-	Display_print1(hDisplay, 11, 4, "%i", currentGotchi.s);
+	GrImageDraw(pContext, &img_Physical, 8, 10*8);
 	tImage test;
 	Menu_GetImageFromBitmap(&test, currentGotchi.image);
-	GrImageDraw(pContext, &test, 20, 10*8);
+	GrImageDraw(pContext, &test, 16, 10*8);
+
+	Display_print1(hDisplay, 11, 4, "%i", currentGotchi.s);
+	GrImageDraw(pContext, &img_Social, 16, 11*8);
 
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		int x = 3;
@@ -240,7 +282,7 @@ Void DrawAirMenu(tContext *pContext)
 	}
 	Display_print1(hDisplay, 1, 7, "%i", currentGotchi.r);
 
-	GrCircleDraw(pContext, 24, 48, 5);
+	GrCircleDraw(pContext, 36, 48, 5);
 	for (i = 0; i < 3; ++i) {
 		vec2f wing, wingSideLeft, wingSideRight;
 		wing.x = cos((i * 2.0943) + offset);
@@ -255,10 +297,10 @@ Void DrawAirMenu(tContext *pContext)
 		wingSideLeft.y += halfWing.y;
 		wingSideRight.x += halfWing.x;
 		wingSideRight.y += halfWing.y;
-		GrLineDraw(pContext, vClose.x+24, vClose.y+48, wingSideLeft.x+24, wingSideLeft.y+48);
-		GrLineDraw(pContext, vClose.x+24, vClose.y+48, wingSideRight.x+24, wingSideRight.y+48);
-		GrLineDraw(pContext, wingSideLeft.x+24, wingSideLeft.y+48, vFar.x+24, vFar.y+48);
-		GrLineDraw(pContext, wingSideRight.x+24, wingSideRight.y+48, vFar.x+24, vFar.y+48);
+		GrLineDraw(pContext, vClose.x+36, vClose.y+48, wingSideLeft.x+36, wingSideLeft.y+48);
+		GrLineDraw(pContext, vClose.x+36, vClose.y+48, wingSideRight.x+36, wingSideRight.y+48);
+		GrLineDraw(pContext, wingSideLeft.x+36, wingSideLeft.y+48, vFar.x+36, vFar.y+48);
+		GrLineDraw(pContext, wingSideRight.x+36, wingSideRight.y+48, vFar.x+36, vFar.y+48);
 	}
 	offset += 0.20943;
 	if (offset >= 2.0943)
@@ -290,7 +332,10 @@ Void DrawSocialMenu(tContext *pContext)
 {
 	int i;
 	for (i = 0; i < currentMenu->numOptions; ++i) {
-		Display_print0(hDisplay, i, 1, currentMenu->options[i].text);
+		int x = 4;
+		if (currentMenu->selectedOption == i)
+			x++;
+		Display_print0(hDisplay, i, x, currentMenu->options[i].text);
 	}
 	Display_print1(hDisplay, 6, 7, "%i", currentGotchi.s);
 
@@ -320,6 +365,7 @@ Void DrawSocialMenu(tContext *pContext)
 Void DrawScreen(UArg arg0, UArg arg1)
 {
 	Clock_Params clockParams;
+	Clock_Params decayClockParams;
 	Display_Params displayParams;
 	displayParams.lineClearMode = DISPLAY_CLEAR_BOTH;
 	Display_Params_init(&displayParams);
@@ -336,19 +382,28 @@ Void DrawScreen(UArg arg0, UArg arg1)
 		System_abort("...");
 	}
 
+	Clock_Params_init(&decayClockParams);
+	decayClockParams.period = 5000 * 1000 / Clock_tickPeriod;
+	decayClock = Clock_create(Menu_DecayAttributes, 5000, &decayClockParams, NULL);
+	if (decayClock == NULL) {
+		System_abort("...");
+	}
+
+	Clock_start(decayClock);
+
 	Display_clear(hDisplay);
 	currentMenu = GetFirstMenu();
 
 	while (1) {
 		tContext *context = DisplayExt_getGrlibContext(hDisplay);
-		Display_clear(hDisplay);
 		if (context) {
 			if (currentMenu != NULL) {
 				currentMenu->drawFxn(context);
 			}
 			GrFlush(context);
 		}
-		Event_pend(g_hEvent, Event_Id_NONE, BUTTON_PRESSED | DATA_CONVERSION_COMPLETE | UPDATE_SCREEN, BIOS_WAIT_FOREVER);
+		Event_pend(globalEvents, Event_Id_NONE, BUTTON_PRESSED | DATA_CONVERSION_COMPLETE | UPDATE_SCREEN, BIOS_WAIT_FOREVER);
+		Display_clear(hDisplay);
 	}
 }
 
