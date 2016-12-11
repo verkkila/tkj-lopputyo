@@ -119,40 +119,6 @@ void Comm_StopTrackingGreetings(void)
 	msgParser = NULL;
 }
 
-void TestAllReturnMessages(void)
-{
-	sprintf(payload, "OK:1,2,3,4,5,6,7,8,40,30,20,10,asdasd");
-	//ParseCreateMsg();
-	//ParseFetchMsg();
-	ParseReturnMsg();
-	/*
-	sprintf(payload, "Virhe:1:malformed - unknown command");
-	HandleError(ParseCreateMsg());
-	HandleError(ParseFetchMsg());
-	HandleError(ParseReturnMsg());
-	sprintf(payload, "Virhe:2:malformed - got x parameters - need y");
-	HandleError(ParseCreateMsg());
-	HandleError(ParseFetchMsg());
-	HandleError(ParseReturnMsg());
-	sprintf(payload, "Virhe:2:malformed - missing colon after command");
-	HandleError(ParseCreateMsg());
-	HandleError(ParseFetchMsg());
-	HandleError(ParseReturnMsg());
-	sprintf(payload, "Virhe:2:malformed - invalid parameters");
-	HandleError(ParseCreateMsg());
-	HandleError(ParseFetchMsg());
-	HandleError(ParseReturnMsg());
-	sprintf(payload, "Virhe:3:donkey exists");
-	HandleError(ParseCreateMsg());
-	HandleError(ParseFetchMsg());
-	HandleError(ParseReturnMsg());
-	sprintf(payload, "Virhe:4:donkey not found");
-	HandleError(ParseCreateMsg());
-	HandleError(ParseFetchMsg());
-	HandleError(ParseReturnMsg());
-	*/
-}
-
 void Comm_CreateNewGotchi(void)
 {
 	destinationAddress = IEEE80154_SINK_ADDR;
@@ -238,10 +204,8 @@ Void Comm_Update(UArg arg0, UArg arg1)
 		if (GetTXFlag() == false && shouldSend == 1 && lastMsgParsed == 1) {
 			Send6LoWPAN(0xBEEA, (uint8_t*)payload, strlen(payload));
 			StartReceive6LoWPAN();
-			System_printf(payload);
-			System_flush();
 			shouldSend = 0;
-			lastMsgParsed = 0;
+			//lastMsgParsed = 0;
 		}
 		if (GetRXFlag() == true) {
 			Receive6LoWPAN(&senderAddr, payload, PAYLOAD_LENGTH);

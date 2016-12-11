@@ -137,7 +137,7 @@ Int main(void)
     /* Task */
 
     Display_CreateTask();
-    //Comm_CreateTask();
+    Comm_CreateTask();
     Sensors_CreateTask();
 
     System_printf("Ready!\n");

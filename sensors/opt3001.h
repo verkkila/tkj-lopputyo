@@ -15,15 +15,19 @@
 
 #include <ti/drivers/I2C.h>
 #include <xdc/runtime/System.h>
+#include <ti/sysbios/knl/Event.h>
 #include "util/math.h"
 #include "Board.h"
 #include "sensordefs.h"
+#include "../eventdefs.h"
 
 #define OPT3001_REG_RESULT		0x0
 #define OPT3001_REG_CONFIG		0x1
 #define OPT3001_DATA_READY		0x80
 
 extern I2C_Handle *pI2C;
+extern Event_Handle globalEvents;
+
 
 float OPT3001_data[OPT3001_NUM_VALUES];
 extern int opt3001_numData;

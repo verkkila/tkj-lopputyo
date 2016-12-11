@@ -35,14 +35,13 @@ void TMP007_Read()
 
 static void TMP007_AddData(char *buf)
 {
-	//System_printf("TMP007: AddData index %i tick %i\n", tmp007_numData, Clock_getTicks() * Clock_tickPeriod / 1000);
-	System_flush();
 	if (tmp007_numData >= TMP007_NUM_VALUES) {
 		System_printf("TMP007 raw data buffer is full, waiting for conversion.\n");
 	} else {
 		rawData[tmp007_numData] = (buf[0] << 8) | buf[1];
 		++tmp007_numData;
 	}
+	System_flush();
 }
 
 void TMP007_HandleMsg(I2C_Transaction *msg, Bool transfer)

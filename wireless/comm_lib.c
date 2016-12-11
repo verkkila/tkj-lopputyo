@@ -36,8 +36,6 @@ Hwi_Handle cpe0Handle;
 Hwi_Params cpe1Params;
 Hwi_Handle cpe1Handle;
 
-char debug_str[20];
-
 uint8_t GetTXFlag(void) {
 	return u8_TXd_Flag;
 }
@@ -98,7 +96,6 @@ int8_t StartReceive6LoWPAN(void) {
 void Send6LoWPAN(uint16_t DestAddr, uint8_t *ptr_Payload, uint8_t u8_length) {
 
 	volatile uint32_t u32_cnt = 0;
-
 	uint8_t result = CWC_CC2650_154_SendDataPacket_Forced(DestAddr, ptr_Payload, u8_length);
 
 	for(u32_cnt = 0; u32_cnt < APP_ADVERTISE_PERIOD; u32_cnt++){//SW timer
@@ -107,12 +104,6 @@ void Send6LoWPAN(uint16_t DestAddr, uint8_t *ptr_Payload, uint8_t u8_length) {
 			break;
 		}
 	}
-
-	/*
-	sprintf(debug_str,"Send msg to 0x%4X: %s\n", DestAddr, ptr_Payload );
-	System_printf(debug_str);
-	System_flush();
-	*/
 }
 
 int8_t Receive6LoWPAN(uint16_t *senderAddr, char *payload, uint8_t maxLen) {
@@ -179,6 +170,8 @@ void Radio_IRQ(CWC_CC2650_154_Events_t Event) {
 
 	switch(Event){
 		case CWC_CC2650_154_EVENT_TXD_OK:
+			System_printf("CWC_CC2650_154_EVENT_TXD_OK\n");
+			System_flush();
 			u8_TXd_Flag=1;
 			break;
 		case CWC_CC2650_154_EVENT_RXD_OK:

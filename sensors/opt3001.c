@@ -12,7 +12,7 @@
 static I2C_Transaction writeConfig;
 static I2C_Transaction readConfig;
 static I2C_Transaction readResult;
-static Bool isDataReady;
+Bool isDataReady;
 static char txBuffer[4];
 static char rxBuffer[4];
 
@@ -43,13 +43,13 @@ static void OPT3001_readDataState(char *buf)
 
 static void OPT3001_AddData(char *buf)
 {
-	System_flush();
 	if (opt3001_numData >= OPT3001_NUM_VALUES) {
 		System_printf("OPT3001 raw data buffer is full, waiting for conversion.\n");
 	} else {
 		rawData[opt3001_numData] = (buf[0] << 8) | buf[1];
 		++opt3001_numData;
 	}
+	System_flush();
 }
 
 void OPT3001_HandleMsg(I2C_Transaction *msg, Bool transfer)
@@ -68,6 +68,7 @@ void OPT3001_HandleMsg(I2C_Transaction *msg, Bool transfer)
 	default:
 		break;
 	}
+
 }
 
 void OPT3001_Read()
@@ -102,54 +103,7 @@ static float OPT3001_ConvertLuminosity(uint16_t luminosityRaw)
 void OPT3001_ConvertData()
 {
 	int i;
-
-	//System_printf("OPT3001: Starting conversion, index: (%i/%i)\n", opt3001_numData, OPT3001_NUM_VALUES);
 	for (i = 0; i < opt3001_numData; ++i) {
 		OPT3001_data[i] = OPT3001_ConvertLuminosity(rawData[i]);
 	}
-	//opt3001_numData = 0;
- 	//System_printf("OPT3001 conversion complete.\n");
 }
-
-/*
-float OPT3001_GetLuminosity() {
-	uint16_t e = 0;
-	uint16_t luminosityRaw = 0;
-	float lux = 0;
-
-	i2cTransaction.slaveAddress = Board_OPT3001_ADDR;
-	txBuffer[0] = OPT3001_REG_CONFIG;
-	i2cTransaction.writeBuf = txBuffer;
-	i2cTransaction.writeCount = 1;
-	i2cTransaction.readBuf = rxBuffer;
-	i2cTransaction.readCount = 2;
-
-	if (I2C_transfer(*pI2C, &i2cTransaction)) {
-		e = (rxBuffer[0] << 8) | rxBuffer[1];
-	} else {
-		e = 0;
-		System_printf("OPT3001: Config read failed!\n");
-		System_flush();
-	}
-
-	if (e & OPT3001_DATA_READY) {
-		txBuffer[0] = OPT3001_REG_RESULT;
-	    i2cTransaction.slaveAddress = Board_OPT3001_ADDR;
-	    i2cTransaction.writeBuf = txBuffer;
-	    i2cTransaction.writeCount = 1;
-	    i2cTransaction.readBuf = rxBuffer;
-	    i2cTransaction.readCount = 2;
-
-		if (I2C_transfer(*pI2C, &i2cTransaction)) {
-			luminosityRaw = (rxBuffer[0] << 8) | rxBuffer[1];
-			int exp = luminosityRaw >> 12;
-			int factor = luminosityRaw & 0x0FFF;
-			lux = 0.01 * pow2(exp) * factor;
-		} else {
-			System_printf("OPT3001: Data read failed!\n");
-			System_flush();
-		}
-	}
-	return lux;
-}
-*/

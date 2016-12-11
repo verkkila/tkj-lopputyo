@@ -42,6 +42,7 @@ int mpu9250_numData = 0;
 
 Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
+
 	switch (msg->slaveAddress) {
 	case Board_TMP007_ADDR:
 		TMP007_HandleMsg(msg, transfer);
@@ -55,6 +56,7 @@ Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 	default:
 		break;
 	}
+
 }
 
 Void I2C_MPU9250_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
@@ -234,7 +236,7 @@ void Sensors_StopTrackingPhysical(void)
 	System_flush();
 }
 
-/*
+
 static void SetI2CParams(void)
 {
 	I2C_Params_init(&i2cParams);
@@ -248,7 +250,7 @@ static void SetI2CParams(void)
 	i2cMpuParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_MPU9250_CompleteFxn;
 	i2cMpuParams.custom = (uintptr_t)&i2cMPUCfg;
 }
-*/
+
 
 Void Sensors_ReadAll(UArg arg0, UArg arg1)
 {
@@ -298,14 +300,14 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 		System_abort("Failed to create semaphore");
 	}
 
-	//SetI2CParams();
+	SetI2CParams();
 
-
+	/*
 	I2C_Params_init(&i2cParams);
 	i2cParams.bitRate = I2C_400kHz;
 	i2cParams.transferMode = I2C_MODE_CALLBACK;
 	i2cParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_CompleteFxn;
-
+	*/
 	i2c = I2C_open(Board_I2C0, &i2cParams);
 	i2cMode = I2CMODE_NORMAL;
 	if (i2c == NULL) {
@@ -313,7 +315,6 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 	} else {
 		System_printf("I2C Initialized! (normal)\n");
 	}
-
 
 	pI2C = &i2c;
 
@@ -326,19 +327,17 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     i2cMode = I2CMODE_NONE;
     pI2C = NULL;
 
-
-
     hMpuPin = PIN_open(&sMpuPin, MpuPinConfig);
     if (hMpuPin == NULL) {
-    	System_abort("...");
+    	System_abort("Failed to open MPU9250 pin.");
     }
-
+    /*
     I2C_Params_init(&i2cMpuParams);
 	i2cMpuParams.bitRate = I2C_400kHz;
 	i2cMpuParams.transferMode = I2C_MODE_CALLBACK;
 	i2cMpuParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_MPU9250_CompleteFxn;
 	i2cMpuParams.custom = (uintptr_t)&i2cMPUCfg;
-
+	*/
     i2cMpu = I2C_open(Board_I2C, &i2cMpuParams);
     i2cMode = I2CMODE_MPU9250;
     if (i2cMpu == NULL) {
