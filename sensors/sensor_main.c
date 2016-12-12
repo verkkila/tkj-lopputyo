@@ -245,7 +245,7 @@ static void SetI2CParams(void)
 }
 
 
-Void Sensors_ReadAll(UArg arg0, UArg arg1)
+Void Sensors_Update(UArg arg0, UArg arg1)
 {
 	I2C_Handle		i2c;
 	I2C_Handle		i2cMpu;
@@ -382,7 +382,7 @@ Void Sensors_CreateTask(void)
 	params.stack = &sensorStack;
 	params.priority = 3;
 
-	task = Task_create(Sensors_ReadAll, &params, NULL);
+	task = Task_create(Sensors_Update, &params, NULL);
 	if (task == NULL) {
 		System_abort("Failed to create sensor task!");
 	}

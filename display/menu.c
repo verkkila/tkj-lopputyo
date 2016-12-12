@@ -20,7 +20,7 @@ Menu *currentMenu = NULL;
 Clock_Handle redrawClock = NULL;
 Clock_Handle decayClock = NULL;
 Clock_Handle buttonClock = NULL;
-int hasReset = 1;
+int buttonHasReset = 1;
 
 static int batteryPercentage = 0;
 
@@ -176,14 +176,14 @@ Void Menu_StopRedrawing(void)
 
 Void ResetButtons(UArg arg)
 {
-	hasReset = 1;
+	buttonHasReset = 1;
 	Clock_stop(buttonClock);
 }
 
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 {
 	Clock_start(buttonClock);
-	if (hasReset) {
+	if (buttonHasReset) {
 		unsigned char selectedOption = currentMenu->selectedOption;
 		if (!isLastOption(currentMenu->options[selectedOption + 1])) {
 			currentMenu->selectedOption++;
@@ -191,14 +191,14 @@ Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 			currentMenu->selectedOption = 0;
 		}
 		Event_post(globalEvents, BUTTON_PRESSED);
-		hasReset = 0;
+		buttonHasReset = 0;
 	}
 }
 
 static void Menu_NextState(void)
 {
 	Clock_start(buttonClock);
-	if (hasReset){
+	if (buttonHasReset){
 		unsigned char selectedOption = currentMenu->selectedOption;
 		int fn = 0;
 		while (currentMenu->options[selectedOption].actions[fn] != NULL) {
@@ -208,7 +208,7 @@ static void Menu_NextState(void)
 		if (currentMenu->options[selectedOption].next != NULL) {
 			currentMenu = currentMenu->options[selectedOption].next;
 		}
-		hasReset = 0;
+		buttonHasReset = 0;
 	}
 }
 

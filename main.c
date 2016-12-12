@@ -88,7 +88,6 @@ void ResetGotchi()
 	currentGotchi.active = false;
 }
 
-/* Handle power button */
 void SetPowerOff(void)
 {
     Display_clear(hDisplay);

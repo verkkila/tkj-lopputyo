@@ -11,7 +11,6 @@ Menu mainMenu;
 Menu activitiesMenu;
 
 Menu sunMenu = {
-	.id = MENU_ACT_SUN,
 	.numOptions = 1,
 	.selectedOption = 0,
 	.drawFxn = DrawSunMenu,
@@ -22,7 +21,6 @@ Menu sunMenu = {
 };
 
 Menu airMenu = {
-	.id = MENU_ACT_AIR,
 	.numOptions = 1,
 	.selectedOption = 0,
 	.drawFxn = DrawAirMenu,
@@ -33,7 +31,6 @@ Menu airMenu = {
 };
 
 Menu physMenu = {
-	.id = MENU_ACT_PHYS,
 	.numOptions = 1,
 	.selectedOption = 0,
 	.drawFxn = DrawPhysMenu,
@@ -44,7 +41,6 @@ Menu physMenu = {
 };
 
 Menu socialMenu = {
-	.id = MENU_ACT_SOCIAL,
 	.numOptions = 2,
 	.selectedOption = 0,
 	.drawFxn = DrawSocialMenu,
@@ -56,7 +52,6 @@ Menu socialMenu = {
 };
 
 Menu activitiesMenu = {
-	.id = MENU_ACTIVITIES,
 	.numOptions = 5,
 	.selectedOption = 0,
 	.drawFxn = DrawActivitiesMenu,
@@ -71,7 +66,6 @@ Menu activitiesMenu = {
 };
 
 Menu mainMenu = {
-	.id = MENU_MAIN,
 	.numOptions = 4,
 	.selectedOption = 0,
 	.drawFxn = DrawMainMenu,
