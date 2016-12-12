@@ -72,9 +72,6 @@ enum Gscale {
   GFS_2000DPS
 };
 
-Semaphore_Handle i2cComplete;
-
-vec3f MPU9250_data[MPU9250_NUM_VALUES] = {0};
 
 // Prototypes
 void initMPU9250();
@@ -87,6 +84,10 @@ uint8_t Ascale = AFS_8G;
 float aRes, gRes;      // scale resolutions per LSB for the sensors
 float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0};      // Bias corrections for gyro and accelerometer
 float SelfTest[6];
+
+Semaphore_Handle i2cComplete;
+
+vec3f MPU9250_data[MPU9250_NUM_VALUES];
 
 static uint8_t txBuffer[2];
 static uint8_t rawData[14];
@@ -138,12 +139,12 @@ void MPU9250_TransferComplete(I2C_Transaction *msg)
 
 void MPU9250_AddData(vec3f *a)
 {
-	if (mpu9250_numData >= MPU9250_NUM_VALUES) {
+	if (MPU9250_numData >= MPU9250_NUM_VALUES) {
 		System_printf("MPU9250 is full.\n");
-		mpu9250_numData = MPU9250_NUM_VALUES;
+		MPU9250_numData = MPU9250_NUM_VALUES;
 	} else {
-		MPU9250_Data[mpu9250_numData] = *a;
-		++mpu9250_numData;
+		MPU9250_data[MPU9250_numData] = *a;
+		++MPU9250_numData;
 	}
 }
 

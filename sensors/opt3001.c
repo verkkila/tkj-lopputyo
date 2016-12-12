@@ -18,7 +18,6 @@ static char rxBuffer[4];
 
 static uint16_t rawData[OPT3001_NUM_VALUES];
 float OPT3001_data[OPT3001_NUM_VALUES];
-//int opt3001_numData;
 
 void OPT3001_Setup(I2C_Handle *i2c)
 {
@@ -43,11 +42,11 @@ static void OPT3001_readDataState(char *buf)
 
 static void OPT3001_AddData(char *buf)
 {
-	if (opt3001_numData >= OPT3001_NUM_VALUES) {
+	if (OPT3001_numData >= OPT3001_NUM_VALUES) {
 		System_printf("OPT3001 raw data buffer is full, waiting for conversion.\n");
 	} else {
-		rawData[opt3001_numData] = (buf[0] << 8) | buf[1];
-		++opt3001_numData;
+		rawData[OPT3001_numData] = (buf[0] << 8) | buf[1];
+		++OPT3001_numData;
 	}
 	System_flush();
 }
@@ -103,7 +102,7 @@ static float OPT3001_ConvertLuminosity(uint16_t luminosityRaw)
 void OPT3001_ConvertData()
 {
 	int i;
-	for (i = 0; i < opt3001_numData; ++i) {
+	for (i = 0; i < OPT3001_numData; ++i) {
 		OPT3001_data[i] = OPT3001_ConvertLuminosity(rawData[i]);
 	}
 }

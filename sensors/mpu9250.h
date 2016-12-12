@@ -22,8 +22,8 @@
 
 extern I2C_Handle *pMpuI2C;
 
-extern int mpu9250_numData;
-vec3f MPU9250_Data[MPU9250_NUM_VALUES];
+extern int MPU9250_numData;
+vec3f MPU9250_data[MPU9250_NUM_VALUES];
 
 void MPU9250_Setup(I2C_Handle *i2c_orig);
 void MPU9250_Read();

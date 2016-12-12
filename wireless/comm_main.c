@@ -61,6 +61,7 @@ void HandleError(int errcode)
 int ParseCreateMsg(void)
 {
 	if (CheckMsgOK()) {
+		ResetGotchi();
 		return 0;
 	} else {
 		return GetErrorCode();
@@ -131,7 +132,7 @@ void Comm_CreateNewGotchi(void)
 			currentGotchi.image[6],
 			currentGotchi.image[7],
 			currentGotchi.name);
-	Semaphore_post(commUpdate);
+	//Semaphore_post(commUpdate);
 	shouldSend = 1;
 	msgParser = ParseCreateMsg;
 }
@@ -139,7 +140,7 @@ void Comm_CreateNewGotchi(void)
 void Comm_FetchGotchi(void)
 {
 	sprintf(payload, "Leiki:testi\n");
-	Semaphore_post(commUpdate);
+	//Semaphore_post(commUpdate);
 	shouldSend = 1;
 	msgParser = ParseFetchMsg;
 }
@@ -151,7 +152,7 @@ void Comm_ReturnGotchi(void)
 											  currentGotchi.r,
 											  currentGotchi.s,
 											  currentGotchi.name);
-	Semaphore_post(commUpdate);
+	//Semaphore_post(commUpdate);
 	shouldSend = 1;
 	msgParser = ParseReturnMsg;
 }
@@ -175,9 +176,9 @@ Bool ReceivedGreeting(void)
 
 void Comm_SendGreeting(void)
 {
-	destinationAddress = IEEE80154_SINK_ADDR;
+	destinationAddress = BROADCAST_ALL;
 	shouldSend = 1;
-	Semaphore_post(commUpdate);
+	//Semaphore_post(commUpdate);
 	sprintf(payload, "Terve\n");
 	msgParser = Comm_TrackReceivedGreetings;
 }
@@ -202,7 +203,7 @@ Void Comm_Update(UArg arg0, UArg arg1)
 
 	while (1) {
 		if (GetTXFlag() == false && shouldSend == 1 && lastMsgParsed == 1) {
-			Send6LoWPAN(0xBEEA, (uint8_t*)payload, strlen(payload));
+			Send6LoWPAN(IEEE80154_SINK_ADDR, (uint8_t*)payload, strlen(payload));
 			StartReceive6LoWPAN();
 			shouldSend = 0;
 			//lastMsgParsed = 0;
@@ -220,7 +221,7 @@ Void Comm_Update(UArg arg0, UArg arg1)
 				}
 			} else if (currentGotchi.active) {
 				sprintf(payload, "Terve:%s\n", currentGotchi.name);
-				destinationAddress = BROADCAST_ALL;
+				destinationAddress = senderAddr;
 				shouldSend = 1;
 			}
 			lastMsgParsed = 1;

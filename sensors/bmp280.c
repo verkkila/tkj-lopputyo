@@ -45,7 +45,7 @@ static I2C_Transaction writeTrimming;
 static uint32_t rawData_Pres[BMP280_NUM_VALUES];
 static uint32_t rawData_Temp[BMP280_NUM_VALUES];
 float BMP280_presData[BMP280_NUM_VALUES];
-//int bmp280_numData;
+//int BMP280_numData;
 
 void BMP280_SetTrimming(char *v)
 {
@@ -136,12 +136,12 @@ void BMP280_Setup(I2C_Handle *i2c)
 
 static void BMP280_AddData(char *buf)
 {
-	if (bmp280_numData >= BMP280_NUM_VALUES) {
+	if (BMP280_numData >= BMP280_NUM_VALUES) {
 		System_printf("BMP280 raw data buffers are full, waiting for conversion.\n");
 	} else {
-		rawData_Pres[bmp280_numData] = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
-		rawData_Temp[bmp280_numData] = (buf[3] << 12) | (buf[4] << 4) | (buf[5] >> 4);
-		++bmp280_numData;
+		rawData_Pres[BMP280_numData] = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
+		rawData_Temp[BMP280_numData] = (buf[3] << 12) | (buf[4] << 4) | (buf[5] >> 4);
+		++BMP280_numData;
 	}
 	System_flush();
 }
@@ -187,7 +187,7 @@ void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer)
 void BMP280_ConvertData()
 {
 	int i;
-	for (i = 0; i < bmp280_numData; ++i) {
+	for (i = 0; i < BMP280_numData; ++i) {
 		BMP280_ConvertTemperature(rawData_Temp[i]);
 		BMP280_presData[i] = BMP280_ConvertPressure(rawData_Pres[i]);
 	}

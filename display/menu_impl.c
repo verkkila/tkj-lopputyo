@@ -79,7 +79,7 @@ Menu mainMenu = {
 			{NULL, {Comm_CreateNewGotchi, NULL, NULL, NULL}, "Luo uusi"},
 			{NULL, {Comm_FetchOrReturnGotchi, NULL, NULL, NULL}, "Hae/vie"},
 			{&activitiesMenu, {NULL, NULL, NULL, NULL}, "Harrasta"},
-			{NULL, {NULL, NULL, NULL, NULL}, "Sammuta"},
+			{NULL, {SetPowerOff, NULL, NULL, NULL}, "Sammuta"},
 			{NULL, {NULL, NULL, NULL, NULL}, ""}
 	}
 };

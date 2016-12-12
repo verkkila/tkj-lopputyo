@@ -21,6 +21,7 @@
 #include <ti/drivers/pin/PINCC26XX.h>
 
 #include "menu_impl.h"
+#include "../util/math.h"
 #include "../sensors/sensor_main.h"
 #include "../wireless/comm_main.h"
 #include "../aasigotchi.h"
@@ -35,6 +36,8 @@ Void Menu_StopRedrawing(void);
 
 Void Menu_StartDecayingAttributes(void);
 Void Menu_StopDecayingAttributes(void);
+
+void Menu_SetPowerOff(void);
 
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id);
 Void Menu_OnButton1(PIN_Handle handle, PIN_Id id);

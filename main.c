@@ -41,10 +41,10 @@ aasigotchi_data currentGotchi = {
 			0b10000001,
 			0b01111110
 	},
-	.l = 10,
-	.a = 20,
-	.r = 30,
-	.s = 40,
+	.l = 0,
+	.a = 0,
+	.r = 0,
+	.s = 0,
 	.active = true
 };
 
@@ -89,16 +89,17 @@ void ResetGotchi()
 }
 
 /* Handle power button */
-Void powerButtonFxn(PIN_Handle handle, PIN_Id pinId)
+void SetPowerOff(void)
 {
     Display_clear(hDisplay);
     Display_close(hDisplay);
-    //Task_sleep(100000 / Clock_tickPeriod);
+    Task_sleep(100 * 1000 / Clock_tickPeriod);
 
-	PIN_close(hButton1);
+	PIN_close(hButton0);
 
     PINCC26XX_setWakeup(cPowerWake);
-	Power_shutdown(NULL, 5000);
+
+	Power_shutdown(NULL, 0);
 }
 
 Int main(void)

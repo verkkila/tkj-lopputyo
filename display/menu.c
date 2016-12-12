@@ -7,6 +7,11 @@
 
 #include "menu.h"
 
+#define AON_BATMON_BASE 0x40095000
+#define AON_BATMON_O_BAT 0x28
+
+#define MAX_BAT_VOLTAGE 3.3f
+
 #define DISPLAY_STACKSIZE 2048
 Char displayStack[DISPLAY_STACKSIZE];
 
@@ -14,6 +19,10 @@ Display_Handle hDisplay;
 Menu *currentMenu = NULL;
 Clock_Handle redrawClock = NULL;
 Clock_Handle decayClock = NULL;
+Clock_Handle buttonClock = NULL;
+int hasReset = 1;
+
+static int batteryPercentage = 0;
 
 const uint8_t imgdata_Gotchi[8] = {
 		0b00100100,
@@ -165,27 +174,41 @@ Void Menu_StopRedrawing(void)
 	Clock_stop(redrawClock);
 }
 
+Void ResetButtons(UArg arg)
+{
+	hasReset = 1;
+	Clock_stop(buttonClock);
+}
+
 Void Menu_OnButton0(PIN_Handle handle, PIN_Id id)
 {
-	unsigned char selectedOption = currentMenu->selectedOption;
-	if (!isLastOption(currentMenu->options[selectedOption + 1])) {
-		currentMenu->selectedOption++;
-	} else {
-		currentMenu->selectedOption = 0;
+	Clock_start(buttonClock);
+	if (hasReset) {
+		unsigned char selectedOption = currentMenu->selectedOption;
+		if (!isLastOption(currentMenu->options[selectedOption + 1])) {
+			currentMenu->selectedOption++;
+		} else {
+			currentMenu->selectedOption = 0;
+		}
+		Event_post(globalEvents, BUTTON_PRESSED);
+		hasReset = 0;
 	}
-	Event_post(globalEvents, BUTTON_PRESSED);
 }
 
 static void Menu_NextState(void)
 {
-	unsigned char selectedOption = currentMenu->selectedOption;
-	int fn = 0;
-	while (currentMenu->options[selectedOption].actions[fn] != NULL) {
-		currentMenu->options[selectedOption].actions[fn]();
-		++fn;
-	}
-	if (currentMenu->options[selectedOption].next != NULL) {
-		currentMenu = currentMenu->options[selectedOption].next;
+	Clock_start(buttonClock);
+	if (hasReset){
+		unsigned char selectedOption = currentMenu->selectedOption;
+		int fn = 0;
+		while (currentMenu->options[selectedOption].actions[fn] != NULL) {
+			currentMenu->options[selectedOption].actions[fn]();
+			++fn;
+		}
+		if (currentMenu->options[selectedOption].next != NULL) {
+			currentMenu = currentMenu->options[selectedOption].next;
+		}
+		hasReset = 0;
 	}
 }
 
@@ -198,7 +221,7 @@ Void Menu_OnButton1(PIN_Handle handle, PIN_Id id)
 Void DrawMainMenu(tContext *pContext)
 {
 	int i;
-	Display_print0(hDisplay, 0, 6, "Menu");
+	Display_print1(hDisplay, 0, 6, "Menu  %i%%", batteryPercentage);
 
 	for (i = 0; i < currentMenu->numOptions; ++i) {
 		int x = 4;
@@ -362,10 +385,23 @@ Void DrawSocialMenu(tContext *pContext)
 		offset = -10;
 }
 
+Void CheckBattery()
+{
+	int i;
+	uint32_t batteryReg = HWREG(AON_BATMON_BASE + AON_BATMON_O_BAT);
+	float battery = (batteryReg & 0x00000700) >> 8;
+	uint32_t frac = batteryReg & 0x000000FF;
+	for (i = 7; i >= 0; --i) {
+		battery += (frac >> i) & 1 ? pow2(-8 + i) : 0;
+	}
+	batteryPercentage = floor((battery / MAX_BAT_VOLTAGE) * 100);
+}
+
 Void DrawScreen(UArg arg0, UArg arg1)
 {
 	Clock_Params clockParams;
 	Clock_Params decayClockParams;
+	Clock_Params buttonClockParams;
 	Display_Params displayParams;
 	displayParams.lineClearMode = DISPLAY_CLEAR_BOTH;
 	Display_Params_init(&displayParams);
@@ -383,9 +419,16 @@ Void DrawScreen(UArg arg0, UArg arg1)
 	}
 
 	Clock_Params_init(&decayClockParams);
-	decayClockParams.period = 5000 * 1000 / Clock_tickPeriod;
-	decayClock = Clock_create(Menu_DecayAttributes, 5000, &decayClockParams, NULL);
+	decayClockParams.period = 60000 * 1000 / Clock_tickPeriod;
+	decayClock = Clock_create(Menu_DecayAttributes, 60000, &decayClockParams, NULL);
 	if (decayClock == NULL) {
+		System_abort("...");
+	}
+
+	Clock_Params_init(&buttonClockParams);
+	buttonClockParams.period = 400 * 1000 / Clock_tickPeriod;
+	buttonClock = Clock_create(ResetButtons, 0, &buttonClockParams, NULL);
+	if (buttonClock == NULL) {
 		System_abort("...");
 	}
 
@@ -395,6 +438,7 @@ Void DrawScreen(UArg arg0, UArg arg1)
 	currentMenu = GetFirstMenu();
 
 	while (1) {
+		CheckBattery();
 		tContext *context = DisplayExt_getGrlibContext(hDisplay);
 		if (context) {
 			if (currentMenu != NULL) {

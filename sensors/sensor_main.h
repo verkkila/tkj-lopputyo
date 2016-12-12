@@ -28,7 +28,6 @@
 #include "../aasigotchi.h"
 #include "sensordefs.h"
 #include "bmp280.h"
-#include "hdc1000.h"
 #include "mpu9250.h"
 #include "opt3001.h"
 #include "tmp007.h"

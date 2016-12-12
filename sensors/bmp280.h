@@ -39,7 +39,7 @@ extern I2C_Handle *pI2C;
 extern Event_Handle globalEvents;
 
 float BMP280_presData[BMP280_NUM_VALUES];
-extern int bmp280_numData;
+extern int BMP280_numData;
 
 void BMP280_Setup(I2C_Handle *i2c);
 void BMP280_HandleMsg(I2C_Transaction *msg, Bool transfer);

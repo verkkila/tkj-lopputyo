@@ -35,10 +35,10 @@ static Clock_Handle		OPT3001_Clock;
 static Clock_Handle 	MPU9250_Clock;
 static Semaphore_Handle	convertValues;
 
-int tmp007_numData = 0;
-int bmp280_numData = 0;
-int opt3001_numData = 0;
-int mpu9250_numData = 0;
+int TMP007_numData = 0;
+int BMP280_numData = 0;
+int OPT3001_numData = 0;
+int MPU9250_numData = 0;
 
 Void I2C_CompleteFxn(I2C_Handle handle, I2C_Transaction *msg, Bool transfer)
 {
@@ -78,7 +78,8 @@ void Sensors_SwitchToNormalI2C()
 	I2C_close(*pMpuI2C);
 	pMpuI2C = NULL;
 	hI2C = I2C_open(Board_I2C0, &i2cParams);
-	*pI2C = hI2C;
+	pI2C = &hI2C;
+	i2cMode = I2CMODE_NORMAL;
 }
 
 void Sensors_SwitchToMPU9250I2C()
@@ -90,41 +91,33 @@ void Sensors_SwitchToMPU9250I2C()
 	I2C_close(*pI2C);
 	pI2C = NULL;
 	hI2C = I2C_open(Board_I2C, &i2cMpuParams);
-	*pMpuI2C = hI2C;
+	pMpuI2C = &hI2C;
+	i2cMode = I2CMODE_MPU9250;
 }
 
 Void TMP007_Tick(UArg arg)
 {
 	TMP007_Read();
-	//System_printf("TMP007 ticks %i\n", Clock_getTicks());
-	//System_flush();
 }
 
 Void BMP280_Tick(UArg arg)
 {
 	BMP280_Read();
-	//System_printf("BMP280 ticks %i\n", Clock_getTicks());
-	//System_flush();
 }
 
 Void OPT3001_Tick(UArg arg)
 {
 	OPT3001_Read();
-	//System_printf("OPT3001 ticks %i\n", Clock_getTicks());
-	//System_flush();
 }
 
 Void MPU9250_Tick(UArg arg)
 {
 	MPU9250_Read();
-	//System_printf("OPT3001 ticks %i\n", Clock_getTicks());
-	//System_flush();
 }
 
 
 Void Conversion_Clock_Tick(UArg arg)
 {
-	//Event_post(globalEvents, START_CONVERSIONS);
 	Semaphore_post(convertValues);
 }
 
@@ -133,7 +126,7 @@ static void AccumulateSun(void)
 	int i, max_index;
 	float temp_a = 0;
 
-	max_index = tmp007_numData < opt3001_numData ? tmp007_numData : opt3001_numData;
+	max_index = TMP007_numData < OPT3001_numData ? TMP007_numData : OPT3001_numData;
 	for (i = 0; i < max_index; ++i) {
 		if (TMP007_data[i] > TEMPERATURE_THRESHOLD && OPT3001_data[i] > LUMINOSITY_THRESHOLD) {
 			temp_a += TMP007_READ_RATE_MS;
@@ -172,8 +165,8 @@ static void AccumulateFreshAir(void)
 	int i;
 	float temp_r = 0;
 
-	for (i = 0; i < bmp280_numData; ++i) {
-		if (BMP280_presData[i] < PRESSURE_THRESHOLD) {
+	for (i = 0; i < BMP280_numData; ++i) {
+		if (BMP280_presData[i] < GROUND_AIR_PRESSURE - PRESSURE_DIFFERENCE) {
 			temp_r += BMP280_READ_RATE_MS;
 		}
 	}
@@ -207,8 +200,8 @@ static void AccumulatePhysicalActivity(void)
 	int i;
 	float temp_l = 0;
 
-	for (i = 0; i < mpu9250_numData; ++i) {
-		if (vec3f_GetLength(&MPU9250_Data[i]) > MOVEMENT_THRESHOLD) {
+	for (i = 0; i < MPU9250_numData; ++i) {
+		if (vec3f_GetLength(&MPU9250_data[i]) > MOVEMENT_THRESHOLD) {
 			temp_l += MPU9250_READ_RATE_MS;
 		}
 	}
@@ -302,12 +295,6 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 
 	SetI2CParams();
 
-	/*
-	I2C_Params_init(&i2cParams);
-	i2cParams.bitRate = I2C_400kHz;
-	i2cParams.transferMode = I2C_MODE_CALLBACK;
-	i2cParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_CompleteFxn;
-	*/
 	i2c = I2C_open(Board_I2C0, &i2cParams);
 	i2cMode = I2CMODE_NORMAL;
 	if (i2c == NULL) {
@@ -331,13 +318,7 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
     if (hMpuPin == NULL) {
     	System_abort("Failed to open MPU9250 pin.");
     }
-    /*
-    I2C_Params_init(&i2cMpuParams);
-	i2cMpuParams.bitRate = I2C_400kHz;
-	i2cMpuParams.transferMode = I2C_MODE_CALLBACK;
-	i2cMpuParams.transferCallbackFxn = (I2C_CallbackFxn)I2C_MPU9250_CompleteFxn;
-	i2cMpuParams.custom = (uintptr_t)&i2cMPUCfg;
-	*/
+
     i2cMpu = I2C_open(Board_I2C, &i2cMpuParams);
     i2cMode = I2CMODE_MPU9250;
     if (i2cMpu == NULL) {
@@ -364,8 +345,8 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 
 			AccumulateSun();
 
-			tmp007_numData = 0;
-			opt3001_numData = 0;
+			TMP007_numData = 0;
+			OPT3001_numData = 0;
 
 			Clock_start(TMP007_Clock);
 			Clock_start(OPT3001_Clock);
@@ -374,13 +355,13 @@ Void Sensors_ReadAll(UArg arg0, UArg arg1)
 			Clock_stop(BMP280_Clock);
 			BMP280_ConvertData();
 			AccumulateFreshAir();
-			bmp280_numData = 0;
+			BMP280_numData = 0;
 			Clock_start(BMP280_Clock);
 			break;
 		case TRACKING_PHYSICAL:
 			Clock_stop(MPU9250_Clock);
 			AccumulatePhysicalActivity();
-			mpu9250_numData = 0;
+			MPU9250_numData = 0;
 			Clock_start(MPU9250_Clock);
 			break;
 		case TRACKING_NONE:

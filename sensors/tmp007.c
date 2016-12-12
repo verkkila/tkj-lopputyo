@@ -14,7 +14,6 @@ static char rxBuffer[2];
 
 uint16_t rawData[TMP007_NUM_VALUES];
 float TMP007_data[TMP007_NUM_VALUES];
-//int tmp007_numData;
 
 void TMP007_Setup()
 {
@@ -35,11 +34,11 @@ void TMP007_Read()
 
 static void TMP007_AddData(char *buf)
 {
-	if (tmp007_numData >= TMP007_NUM_VALUES) {
+	if (TMP007_numData >= TMP007_NUM_VALUES) {
 		System_printf("TMP007 raw data buffer is full, waiting for conversion.\n");
 	} else {
-		rawData[tmp007_numData] = (buf[0] << 8) | buf[1];
-		++tmp007_numData;
+		rawData[TMP007_numData] = (buf[0] << 8) | buf[1];
+		++TMP007_numData;
 	}
 	System_flush();
 }
@@ -50,7 +49,6 @@ void TMP007_HandleMsg(I2C_Transaction *msg, Bool transfer)
 	switch (reg) {
 	case TMP007_REG_TEMP:
 		TMP007_AddData(msg->readBuf);
-		//Event_post(globalEvents, TMP007_READ_COMPLETE);
 		break;
 	default:
 		break;
@@ -88,59 +86,8 @@ void TMP007_ConvertData()
 {
 	int i;
 
-	//System_printf("TMP007: Starting conversion, index: (%i/%i)\n", tmp007_numData, TMP007_NUM_VALUES);
-	for (i = 0; i < tmp007_numData; ++i) {
+	for (i = 0; i < TMP007_numData; ++i) {
 		TMP007_data[i] = TMP007_ConvertTemperature(rawData[i]);
 	}
-	//tmp007_numData = 0;
-	//System_printf("TMP007 conversion complete.\n");
 }
-
-/*
-float TMP007_GetTemperature()
-{
-	float temperature = 0.0f;
-	uint16_t temperatureRaw = 0;
-	I2C_Transaction i2cTransaction;
-	char txBuffer[4];
-	char rxBuffer[2];
-
-	txBuffer[0] = TMP007_REG_TEMP;
-    i2cTransaction.slaveAddress = Board_TMP007_ADDR;
-    i2cTransaction.writeBuf = txBuffer;
-    i2cTransaction.writeCount = 1;
-    i2cTransaction.readBuf = rxBuffer;
-    i2cTransaction.readCount = 2;
-
-	if (I2C_transfer(*pI2C, &i2cTransaction)) {
-		int i, isNegative;
-		temperatureRaw = (rxBuffer[0] << 8) | rxBuffer[1];
-		//temperatureRaw = 0b1100000001000000; //-127.5
-		isNegative = temperatureRaw & 0x8000;
-
-		if (temperatureRaw & 1)
-			return 0.0f;
-
-		if (isNegative) {
-			temperatureRaw = ~(temperatureRaw) + 1;
-		}
-
-		for (i = 2; i < 15; ++i) {
-			int isBitSet = (temperatureRaw >> i) & 1;
-			int exp = i - 7;
-			if (isBitSet) {
-				temperature += pow2(exp);
-			}
-		}
-
-		if (isNegative)
-			temperature *= -1;
-	} else {
-
-		System_printf("TMP007: Data read failed!\n");
-		System_flush();
-	}
-	return temperature;
-}
-*/
 

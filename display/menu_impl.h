@@ -30,6 +30,7 @@ enum MenuId {
 	MENU_ACT_SOCIAL,
 	MENU_HELP
 };
+void SetPowerOff(void);
 
 typedef struct Menu* pMenu;
 

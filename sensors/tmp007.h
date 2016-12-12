@@ -27,7 +27,7 @@ extern I2C_Handle *pI2C;
 extern Event_Handle g_hEvent;
 
 float TMP007_data[TMP007_NUM_VALUES];
-extern int tmp007_numData;
+extern int TMP007_numData;
 
 void TMP007_Setup();
 void TMP007_HandleMsg(I2C_Transaction *msg, Bool transfer);

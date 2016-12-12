@@ -30,7 +30,7 @@ extern Event_Handle globalEvents;
 
 
 float OPT3001_data[OPT3001_NUM_VALUES];
-extern int opt3001_numData;
+extern int OPT3001_numData;
 
 void OPT3001_Setup(I2C_Handle *i2c);
 void OPT3001_HandleMsg(I2C_Transaction *msg, Bool transfer);
